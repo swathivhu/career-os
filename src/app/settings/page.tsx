@@ -1,3 +1,5 @@
+"use client";
+
 import { TopBar } from "@/components/layout/TopBar";
 import { ContextHeader } from "@/components/layout/ContextHeader";
 import { Input } from "@/components/ui/input";
@@ -11,8 +13,36 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { useSettings, UserSettings } from "@/hooks/use-settings";
+import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+import { CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { settings, saveSettings, isLoaded } = useSettings();
+  const [formState, setFormState] = useState<UserSettings>({
+    keywords: "",
+    location: "",
+    mode: "remote",
+    experience: "fresher",
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setFormState(settings);
+    }
+  }, [settings]);
+
+  const handleApply = () => {
+    saveSettings(formState);
+    toast({
+      title: "Configuration Applied",
+      description: "Your discovery parameters have been updated.",
+    });
+  };
+
+  if (!isLoaded) return null;
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <TopBar />
@@ -32,6 +62,8 @@ export default function SettingsPage() {
               </Label>
               <Input 
                 id="keywords" 
+                value={formState.keywords}
+                onChange={(e) => setFormState({ ...formState, keywords: e.target.value })}
                 placeholder="e.g. Senior Product Designer, React Engineer, Lead Architect" 
                 className="rounded-none border-border/60 bg-card h-12 focus:ring-primary"
               />
@@ -51,6 +83,8 @@ export default function SettingsPage() {
               </Label>
               <Input 
                 id="location" 
+                value={formState.location}
+                onChange={(e) => setFormState({ ...formState, location: e.target.value })}
                 placeholder="e.g. London, New York, Tokyo" 
                 className="rounded-none border-border/60 bg-card h-12 focus:ring-primary"
               />
@@ -61,7 +95,11 @@ export default function SettingsPage() {
             <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs">
               03. Operational Mode
             </h3>
-            <RadioGroup defaultValue="remote" className="grid grid-cols-3 gap-md pt-xs">
+            <RadioGroup 
+              value={formState.mode} 
+              onValueChange={(v) => setFormState({ ...formState, mode: v })}
+              className="grid grid-cols-3 gap-md pt-xs"
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="remote" id="remote" className="border-primary" />
                 <Label htmlFor="remote" className="text-xs font-bold uppercase tracking-widest cursor-pointer">Remote</Label>
@@ -81,12 +119,15 @@ export default function SettingsPage() {
             <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs">
               04. Seniority Level
             </h3>
-            <Select>
+            <Select 
+              value={formState.experience} 
+              onValueChange={(v) => setFormState({ ...formState, experience: v })}
+            >
               <SelectTrigger className="w-full h-12 rounded-none border-border/60 bg-card focus:ring-primary">
                 <SelectValue placeholder="Select Experience Level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="junior">Junior (0-2 years)</SelectItem>
+                <SelectItem value="fresher">Junior (0-2 years)</SelectItem>
                 <SelectItem value="mid">Mid-Weight (3-5 years)</SelectItem>
                 <SelectItem value="senior">Senior (6+ years)</SelectItem>
                 <SelectItem value="lead">Lead / Principal</SelectItem>
@@ -96,7 +137,11 @@ export default function SettingsPage() {
           </section>
 
           <div className="pt-md">
-            <Button className="w-full md:w-auto px-xl h-14 rounded-none bg-foreground text-background font-bold uppercase tracking-[0.2em] hover:bg-foreground/90">
+            <Button 
+              onClick={handleApply}
+              className="w-full md:w-auto px-xl h-14 rounded-none bg-foreground text-background font-bold uppercase tracking-[0.2em] hover:bg-foreground/90"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
               Apply Configuration
             </Button>
           </div>
