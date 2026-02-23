@@ -1,0 +1,312 @@
+export interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  mode: 'Remote' | 'Hybrid' | 'Onsite';
+  experience: 'Fresher' | '0-1' | '1-3' | '3-5';
+  skills: string[];
+  source: 'LinkedIn' | 'Naukri' | 'Indeed';
+  postedDaysAgo: number;
+  salaryRange: string;
+  applyUrl: string;
+  description: string;
+}
+
+export const JOBS_DATA: Job[] = [
+  {
+    id: '1',
+    title: 'SDE Intern',
+    company: 'Razorpay',
+    location: 'Bangalore',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['React', 'Node.js', 'PostgreSQL'],
+    source: 'LinkedIn',
+    postedDaysAgo: 1,
+    salaryRange: '₹30k–₹45k/month Internship',
+    applyUrl: 'https://razorpay.com/jobs/sde-intern',
+    description: 'Join the core payments team to build scalable checkout experiences. You will work on high-availability systems processing millions of transactions daily.'
+  },
+  {
+    id: '2',
+    title: 'React Developer (1-3)',
+    company: 'PhonePe',
+    location: 'Bangalore',
+    mode: 'Hybrid',
+    experience: '1-3',
+    skills: ['React', 'TypeScript', 'Redux'],
+    source: 'Naukri',
+    postedDaysAgo: 0,
+    salaryRange: '12–18 LPA',
+    applyUrl: 'https://phonepe.com/careers/react-dev',
+    description: 'Work on the primary consumer application. We are looking for engineers who care deeply about performance, accessibility, and clean architecture.'
+  },
+  {
+    id: '3',
+    title: 'Graduate Engineer Trainee',
+    company: 'TCS',
+    location: 'Pune',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['Java', 'SQL', 'Python'],
+    source: 'Indeed',
+    postedDaysAgo: 3,
+    salaryRange: '3.6–4.5 LPA',
+    applyUrl: 'https://tcs.com/careers/get',
+    description: 'Start your professional journey with TCS. You will undergo rigorous training in enterprise software development and work on global client projects.'
+  },
+  {
+    id: '4',
+    title: 'Junior Backend Developer',
+    company: 'Zomato',
+    location: 'Gurgaon',
+    mode: 'Hybrid',
+    experience: '0-1',
+    skills: ['Node.js', 'Go', 'Redis'],
+    source: 'LinkedIn',
+    postedDaysAgo: 2,
+    salaryRange: '10–15 LPA',
+    applyUrl: 'https://zomato.com/careers/junior-backend',
+    description: 'Help us scale the delivery logistics engine. You will be responsible for optimizing routing algorithms and improving order fulfillment latency.'
+  },
+  {
+    id: '5',
+    title: 'Frontend Intern',
+    company: 'CRED',
+    location: 'Bangalore',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['React', 'Tailwind', 'Framer Motion'],
+    source: 'LinkedIn',
+    postedDaysAgo: 1,
+    salaryRange: '₹40k–₹60k/month Internship',
+    applyUrl: 'https://cred.club/careers/frontend-intern',
+    description: 'Craft world-class mobile-first web experiences. At CRED, we value design precision and fluid animations above all else.'
+  },
+  {
+    id: '6',
+    title: 'Java Developer (0-1)',
+    company: 'Infosys',
+    location: 'Hyderabad',
+    mode: 'Onsite',
+    experience: '0-1',
+    skills: ['Java', 'Spring Boot', 'Hibernate'],
+    source: 'Naukri',
+    postedDaysAgo: 5,
+    salaryRange: '5–8 LPA',
+    applyUrl: 'https://infosys.com/careers/java-dev',
+    description: 'Develop enterprise-grade applications for our banking sector clients. Focus on security, reliability, and thorough unit testing.'
+  },
+  {
+    id: '7',
+    title: 'QA Intern',
+    company: 'Swiggy',
+    location: 'Bangalore',
+    mode: 'Hybrid',
+    experience: 'Fresher',
+    skills: ['Selenium', 'Java', 'Appium'],
+    source: 'LinkedIn',
+    postedDaysAgo: 4,
+    salaryRange: '₹25k–₹35k/month Internship',
+    applyUrl: 'https://swiggy.com/careers/qa-intern',
+    description: 'Ensure the quality of Swiggy’s mobile apps. You will learn automated testing frameworks and help in bug triaging and regression cycles.'
+  },
+  {
+    id: '8',
+    title: 'Data Analyst Intern',
+    company: 'Flipkart',
+    location: 'Bangalore',
+    mode: 'Hybrid',
+    experience: 'Fresher',
+    skills: ['SQL', 'Python', 'PowerBI'],
+    source: 'Naukri',
+    postedDaysAgo: 2,
+    salaryRange: '₹35k–₹50k/month Internship',
+    applyUrl: 'https://flipkart.com/careers/data-intern',
+    description: 'Analyze user behavior during Big Billion Days events. You will work with the business intelligence team to drive actionable insights.'
+  },
+  {
+    id: '9',
+    title: 'Python Developer (Fresher)',
+    company: 'Freshworks',
+    location: 'Chennai',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['Python', 'Django', 'PostgreSQL'],
+    source: 'Indeed',
+    postedDaysAgo: 6,
+    salaryRange: '6–9 LPA',
+    applyUrl: 'https://freshworks.com/careers/python-fresh',
+    description: 'Build robust APIs for our CRM platform. We value simple, readable code and developers who are curious about SaaS architecture.'
+  },
+  {
+    id: '10',
+    title: 'React Developer (1-3)',
+    company: 'Juspay',
+    location: 'Bangalore',
+    mode: 'Onsite',
+    experience: '1-3',
+    skills: ['React', 'PureScript', 'FP'],
+    source: 'LinkedIn',
+    postedDaysAgo: 1,
+    salaryRange: '18–25 LPA',
+    applyUrl: 'https://juspay.in/careers/react-dev',
+    description: 'Join the team building India’s fastest payments SDK. We use Functional Programming paradigms to ensure correctness and speed.'
+  },
+  {
+    id: '11',
+    title: 'SDE Intern',
+    company: 'Paytm',
+    location: 'Noida',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['Node.js', 'MongoDB', 'AWS'],
+    source: 'Naukri',
+    postedDaysAgo: 3,
+    salaryRange: '₹20k–₹35k/month Internship',
+    applyUrl: 'https://paytm.com/careers/intern',
+    description: 'Contribute to the wallet and banking services. You will be paired with a mentor to work on production features in a fast-paced environment.'
+  },
+  {
+    id: '12',
+    title: 'Junior Backend Developer',
+    company: 'Zoho',
+    location: 'Chennai',
+    mode: 'Onsite',
+    experience: '0-1',
+    skills: ['Java', 'C++', 'Algorithms'],
+    source: 'Indeed',
+    postedDaysAgo: 7,
+    salaryRange: '7–12 LPA',
+    applyUrl: 'https://zoho.com/careers/dev',
+    description: 'Solve complex engineering problems at the infrastructure level. We prefer candidates who have a strong grasp of data structures and OS fundamentals.'
+  },
+  {
+    id: '13',
+    title: 'Graduate Engineer Trainee',
+    company: 'Wipro',
+    location: 'Bangalore',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['C#', '.NET', 'SQL'],
+    source: 'Naukri',
+    postedDaysAgo: 8,
+    salaryRange: '3.5–4.2 LPA',
+    applyUrl: 'https://wipro.com/careers/get',
+    description: 'Begin your IT career with Wipro. You will work on digitalization projects for fortune 500 companies using the latest tech stacks.'
+  },
+  {
+    id: '14',
+    title: 'React Developer (1-3)',
+    company: 'Amazon',
+    location: 'Hyderabad',
+    mode: 'Hybrid',
+    experience: '1-3',
+    skills: ['React', 'Redux', 'AWS'],
+    source: 'LinkedIn',
+    postedDaysAgo: 4,
+    salaryRange: '25–40 LPA',
+    applyUrl: 'https://amazon.jobs/react-dev',
+    description: 'Build customer-facing UI for Amazon Web Services. We focus on low-latency web applications and global scale availability.'
+  },
+  {
+    id: '15',
+    title: 'Python Developer (Fresher)',
+    company: 'IBM',
+    location: 'Bangalore',
+    mode: 'Hybrid',
+    experience: 'Fresher',
+    skills: ['Python', 'AI/ML', 'Docker'],
+    source: 'LinkedIn',
+    postedDaysAgo: 2,
+    salaryRange: '8–12 LPA',
+    applyUrl: 'https://ibm.com/careers/python',
+    description: 'Join the Watson AI team to build next-gen intelligence services. You will be responsible for creating data pipelines and model inference APIs.'
+  },
+  {
+    id: '16',
+    title: 'SDE Intern',
+    company: 'Ola',
+    location: 'Bangalore',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['Go', 'Kubernetes', 'Microservices'],
+    source: 'Indeed',
+    postedDaysAgo: 1,
+    salaryRange: '₹35k–₹50k/month Internship',
+    applyUrl: 'https://ola.com/careers/intern',
+    description: 'Work on the core mobility platform. Help us build the next generation of ride-sharing and electric vehicle software.'
+  },
+  {
+    id: '17',
+    title: 'Frontend Intern',
+    company: 'Zepto',
+    location: 'Mumbai',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['React', 'SCSS', 'Jest'],
+    source: 'LinkedIn',
+    postedDaysAgo: 0,
+    salaryRange: '₹40k–₹55k/month Internship',
+    applyUrl: 'https://zepto.com/careers/frontend',
+    description: 'Build the lightning-fast web checkout for 10-minute grocery delivery. Speed and responsiveness are our top priorities.'
+  },
+  {
+    id: '18',
+    title: 'QA Intern',
+    company: 'Accenture',
+    location: 'Pune',
+    mode: 'Onsite',
+    experience: 'Fresher',
+    skills: ['Manual Testing', 'Jira', 'Postman'],
+    source: 'Naukri',
+    postedDaysAgo: 9,
+    salaryRange: '₹15k–₹25k/month Internship',
+    applyUrl: 'https://accenture.com/careers/qa',
+    description: 'Support our testing teams in verifying enterprise deployments. You will learn the full SDLC and industry-standard testing protocols.'
+  },
+  {
+    id: '19',
+    title: 'Java Developer (0-1)',
+    company: 'Cognizant',
+    location: 'Chennai',
+    mode: 'Hybrid',
+    experience: '0-1',
+    skills: ['Java', 'Spring Boot', 'Microservices'],
+    source: 'Indeed',
+    postedDaysAgo: 5,
+    salaryRange: '4.5–7 LPA',
+    applyUrl: 'https://cognizant.com/careers/java',
+    description: 'Develop backend services for modern retail platforms. We look for candidates who understand cloud-native architecture principles.'
+  },
+  {
+    id: '20',
+    title: 'Data Analyst Intern',
+    company: 'InMobi',
+    location: 'Bangalore',
+    mode: 'Hybrid',
+    experience: 'Fresher',
+    skills: ['Python', 'Pandas', 'Excel'],
+    source: 'LinkedIn',
+    postedDaysAgo: 3,
+    salaryRange: '₹30k–₹45k/month Internship',
+    applyUrl: 'https://inmobi.com/careers/data',
+    description: 'Dive deep into ad-tech data to improve conversion rates. You will work with large datasets and help optimize real-time bidding strategies.'
+  },
+  // Adding more mock data to reach closer to 60 for the UI
+  ...Array.from({ length: 40 }).map((_, i) => ({
+    id: (i + 21).toString(),
+    title: ['Junior Backend Developer', 'SDE Intern', 'React Developer (1-3)', 'Python Developer (Fresher)', 'Graduate Engineer Trainee'][i % 5],
+    company: ['Oracle', 'SAP', 'Dell', 'Blinkit', 'Postman', 'Groww', 'Nykaa', 'Lenskart'][i % 8],
+    location: ['Bangalore', 'Hyderabad', 'Pune', 'Gurgaon', 'Noida', 'Chennai', 'Mumbai', 'Remote'][i % 8],
+    mode: ['Remote', 'Hybrid', 'Onsite'][i % 3] as any,
+    experience: ['Fresher', '0-1', '1-3', '3-5'][i % 4] as any,
+    skills: ['JavaScript', 'TypeScript', 'Node.js', 'React', 'Python', 'AWS', 'Docker'].slice(0, 3 + (i % 3)),
+    source: ['LinkedIn', 'Naukri', 'Indeed'][i % 3] as any,
+    postedDaysAgo: i % 10,
+    salaryRange: ['₹15k–₹40k/month Internship', '6–10 LPA', '10–18 LPA', '3–5 LPA'][i % 4],
+    applyUrl: 'https://careers.example.com/apply',
+    description: 'This is a realistic job description for a tech role in a top Indian company. Join us to build the future of software services.'
+  }))
+];

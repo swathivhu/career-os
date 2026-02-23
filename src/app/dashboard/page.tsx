@@ -1,30 +1,110 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { ContextHeader } from "@/components/layout/ContextHeader";
+import { ProofFooter } from "@/components/layout/ProofFooter";
+import { SecondaryPanel } from "@/components/layout/SecondaryPanel";
+import { JOBS_DATA, Job } from "@/lib/jobs-data";
+import { JobCard } from "@/components/jobs/JobCard";
+import { JobFilterBar } from "@/components/jobs/JobFilterBar";
+import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
+import { useSavedJobs } from "@/hooks/use-saved-jobs";
 import { Ghost } from "lucide-react";
 
 export default function DashboardPage() {
+  const [filters, setFilters] = useState({
+    search: "",
+    location: "",
+    mode: "",
+    experience: "",
+    source: "",
+  });
+
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const { savedIds, toggleSave } = useSavedJobs();
+
+  const filteredJobs = useMemo(() => {
+    return JOBS_DATA.filter(job => {
+      const matchesSearch = !filters.search || 
+        job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        job.company.toLowerCase().includes(filters.search.toLowerCase()) ||
+        job.skills.some(s => s.toLowerCase().includes(filters.search.toLowerCase()));
+      
+      const matchesLocation = !filters.location || job.location === filters.location;
+      const matchesMode = !filters.mode || job.mode === filters.mode;
+      const matchesExp = !filters.experience || job.experience === filters.experience;
+      const matchesSource = !filters.source || job.source === filters.source;
+
+      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource;
+    }).sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
+  }, [filters]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-xl">
       <TopBar />
       <ContextHeader 
         title="Active Pulse" 
-        subtitle="Real-time monitoring of job opportunities matching your profile."
+        subtitle="Real-time monitoring of job opportunities matching your profile parameters."
       />
-      <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-xl flex items-center justify-center">
-        <div className="text-center space-y-md opacity-30 select-none">
-          <div className="flex justify-center">
-            <div className="p-lg border border-dashed border-border rounded-full">
-              <Ghost className="h-12 w-12 text-muted-foreground" />
-            </div>
-          </div>
+      
+      <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-lg flex flex-col md:flex-row gap-xl">
+        {/* Primary Workspace (70%) */}
+        <div className="w-full md:w-[70%] space-y-md">
+          <JobFilterBar filters={filters} setFilters={setFilters} />
+          
           <div className="space-y-xs">
-            <h2 className="text-2xl font-headline italic">Quiet Morning.</h2>
-            <p className="text-sm font-medium uppercase tracking-[0.2em]">
-              No jobs yet. In the next step, you will load a realistic dataset.
-            </p>
+            <div className="flex justify-between items-center mb-sm px-xs">
+              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+                Matched Opportunities ({filteredJobs.length})
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60">
+                Sorted by Latest
+              </span>
+            </div>
+
+            {filteredJobs.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
+                {filteredJobs.map(job => (
+                  <JobCard 
+                    key={job.id} 
+                    job={job} 
+                    onView={setSelectedJob}
+                    onSave={toggleSave}
+                    isSaved={savedIds.includes(job.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-xl space-y-md opacity-30 select-none border border-dashed border-border mt-md">
+                <div className="flex justify-center">
+                  <Ghost className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <div className="space-y-xs">
+                  <h2 className="text-2xl font-headline italic">No matches found.</h2>
+                  <p className="text-sm font-medium uppercase tracking-[0.2em]">
+                    Try adjusting your filters to broaden the scope.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Secondary Panel (30%) */}
+        <aside className="w-full md:w-[30%]">
+          <div className="sticky top-24">
+            <SecondaryPanel />
+          </div>
+        </aside>
       </main>
+
+      <JobDetailsModal 
+        job={selectedJob} 
+        onClose={() => setSelectedJob(null)} 
+      />
+      
+      <ProofFooter />
     </div>
   );
 }
