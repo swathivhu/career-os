@@ -11,8 +11,15 @@ export default {
     extend: {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        headline: ['Literata', 'serif'],
         code: ['monospace'],
+      },
+      spacing: {
+        'xs': '8px',
+        'sm': '16px',
+        'md': '24px',
+        'lg': '40px',
+        'xl': '64px',
       },
       colors: {
         background: 'hsl(var(--background))',
