@@ -1,19 +1,19 @@
 import { TopBar } from "@/components/layout/TopBar";
 import { ContextHeader } from "@/components/layout/ContextHeader";
 
-export default function Home() {
+export default function DigestPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <TopBar />
       <ContextHeader 
-        title="Job Notification Tracker" 
+        title="Notification Digest" 
         subtitle="This section will be built in the next step."
       />
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl mt-xl">
-        <div className="py-xl border-t border-border/30">
-          <p className="text-muted-foreground font-medium italic opacity-60">
-            Select a module from the navigation to begin.
-          </p>
+        <div className="h-[400px] border border-dashed border-border flex items-center justify-center">
+          <span className="text-muted-foreground text-sm uppercase tracking-widest font-medium opacity-40">
+            Aggregation Area
+          </span>
         </div>
       </main>
     </div>
