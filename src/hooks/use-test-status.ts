@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,16 +9,16 @@ export interface TestItem {
 }
 
 export const TEST_CHECKLIST: TestItem[] = [
-  { id: "pref-persist", label: "Preferences persist after refresh", howTo: "Go to Settings, save preferences, refresh page, and verify values remain." },
-  { id: "score-calc", label: "Match score calculates correctly", howTo: "Check job cards on Dashboard; confirm scores align with your settings." },
-  { id: "match-toggle", label: "'Show only matches' toggle works", howTo: "Toggle 'Matches Only' on Dashboard and verify non-matching jobs are hidden." },
-  { id: "save-persist", label: "Save job persists after refresh", howTo: "Save a job, refresh, and verify it still appears in 'Saved' archives." },
-  { id: "apply-tab", label: "Apply opens in new tab", howTo: "Click 'Apply' on any job and confirm it opens a new browser tab." },
-  { id: "status-persist", label: "Status update persists after refresh", howTo: "Change a job status, refresh, and verify the badge color remains." },
-  { id: "status-filter", label: "Status filter works correctly", howTo: "Filter Dashboard by 'Applied' and confirm only those jobs show." },
-  { id: "digest-gen", label: "Digest generates top 10 by score", howTo: "Generate a digest and verify jobs are ordered by match percentage." },
-  { id: "digest-persist", label: "Digest persists for the day", howTo: "Generate a digest, refresh, and confirm the same list is displayed." },
-  { id: "no-errors", label: "No console errors on main pages", howTo: "Open Developer Tools (F12) and verify the console is clear of red errors." },
+  { id: "jd-req", label: "JD required validation works", howTo: "Try to analyze with an empty JD field; it should be disabled." },
+  { id: "short-jd", label: "Short JD warning shows for <200 chars", howTo: "Enter a brief JD and verify the amber warning alert appears." },
+  { id: "skill-group", label: "Skills extraction groups correctly", howTo: "Analyze a JD with React, SQL, and AWS; confirm they appear in Web, Data, and Cloud." },
+  { id: "round-map", label: "Round mapping changes based on company + skills", howTo: "Compare 'Amazon' vs a startup name; verify round structure differences." },
+  { id: "score-det", label: "Score calculation is deterministic", howTo: "Run the same JD twice; verify the base score remains identical." },
+  { id: "live-score", label: "Skill toggles update score live", howTo: "Toggle 'I know this' on a skill in results; verify the readiness index shifts." },
+  { id: "persist-res", label: "Changes persist after refresh", howTo: "Toggle a skill, refresh the page, and verify the confidence state remains." },
+  { id: "history-sync", label: "History saves and loads correctly", howTo: "Run an analysis, check the History page, and reopen it to verify data integrity." },
+  { id: "export-content", label: "Export buttons copy the correct content", howTo: "Click 'Copy Strategy' and verify the clipboard contains the 7-day plan." },
+  { id: "console-clean", label: "No console errors on core pages", howTo: "Check DevTools console on Analyze and Results pages; verify no red errors." },
 ];
 
 export interface ProjectLinks {

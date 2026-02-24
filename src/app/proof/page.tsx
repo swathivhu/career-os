@@ -1,4 +1,3 @@
-
 "use client";
 
 import { TopBar } from "@/components/layout/TopBar";
@@ -17,7 +16,8 @@ import {
   RotateCcw,
   Link as LinkIcon,
   Copy,
-  Check
+  Check,
+  Zap
 } from "lucide-react";
 import {
   Tooltip,
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function ProofPage() {
   const { 
@@ -36,19 +37,18 @@ export default function ProofPage() {
     updateLink, 
     resetTests, 
     passCount, 
-    isFullyVerified, 
     isShippable,
     isLoaded,
     status
   } = useTestStatus();
 
   const steps = [
-    { name: "Step 1: Route Shell", done: true },
-    { name: "Step 2: Landing & Empty States", done: true },
-    { name: "Step 3: Realistic Data & Rendering", done: true },
-    { name: "Step 4: Search & Filters", done: true },
-    { name: "Step 5: Daily Digest Engine", done: true },
-    { name: "Step 6: Status Tracking", done: true },
+    { name: "Step 1: Indigo Design System", done: true },
+    { name: "Step 2: Dashboard Shell", done: true },
+    { name: "Step 3: Skill Heuristics Engine", done: true },
+    { name: "Step 4: Persistence Layer", done: true },
+    { name: "Step 5: Interactive Roadmap", done: true },
+    { name: "Step 6: Real-time Scoring", done: true },
     { name: "Step 7: Test Checklist", done: passCount === TEST_CHECKLIST.length },
     { name: "Step 8: Submission & Ship", done: isShippable },
   ];
@@ -56,7 +56,7 @@ export default function ProofPage() {
   const handleCopySubmission = () => {
     const text = `
 ------------------------------------------
-Job Notification Tracker — Final Submission
+Placement Readiness Platform — Final Submission
 
 Lovable Project:
 ${links.lovable}
@@ -68,10 +68,10 @@ Live Deployment:
 ${links.deployment}
 
 Core Features:
-- Intelligent match scoring
-- Daily digest simulation
-- Status tracking
-- Test checklist enforced
+- Heuristic skill extraction
+- 7-day strategic plan
+- Interactive proficiency matrix
+- Real-time readiness scoring
 ------------------------------------------
 `.trim();
     
@@ -89,7 +89,7 @@ Core Features:
       <TopBar />
       <ContextHeader 
         title="Proof Matrix" 
-        subtitle="Final verification and artifact collection for Project 1 — Job Notification Tracker."
+        subtitle="Final verification and artifact collection for Project 2 — Placement Readiness Platform."
       />
       
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-xl grid grid-cols-1 lg:grid-cols-12 gap-xl">
@@ -99,7 +99,7 @@ Core Features:
           {/* Project Status Header */}
           <div className={`p-lg border-2 ${isShippable ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'} flex flex-col md:flex-row justify-between items-center gap-md transition-all duration-500`}>
             <div className="space-y-xs text-center md:text-left">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Project 1 Status</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Project 2 Status</span>
               <div className="flex items-center gap-sm justify-center md:justify-start">
                 <h2 className="text-3xl font-headline italic">
                   {status}
@@ -111,10 +111,15 @@ Core Features:
               </div>
             </div>
             
-            {!isShippable ? (
-              <div className="flex items-center gap-xs text-primary font-bold uppercase tracking-widest text-xs animate-pulse">
+            {passCount < TEST_CHECKLIST.length ? (
+              <div className="flex items-center gap-xs text-amber-600 font-bold uppercase tracking-widest text-xs animate-pulse">
                 <AlertTriangle className="h-4 w-4" />
-                Resolve all steps and provide links to ship.
+                Resolve all {TEST_CHECKLIST.length - passCount} remaining tests to ship.
+              </div>
+            ) : !isShippable ? (
+              <div className="flex items-center gap-xs text-primary font-bold uppercase tracking-widest text-xs">
+                <ShieldCheck className="h-4 w-4" />
+                Tests passed. Provide links to finalize.
               </div>
             ) : (
               <Button onClick={handleCopySubmission} className="rounded-none h-12 bg-foreground text-background font-bold uppercase tracking-widest px-lg">
@@ -126,9 +131,11 @@ Core Features:
 
           {/* Section A: Checklist */}
           <div className="space-y-md">
-            <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs">
-              01. Verification Matrix ({passCount}/10)
-            </h3>
+            <div className="flex justify-between items-end">
+              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs flex-1">
+                01. Verification Matrix ({passCount}/{TEST_CHECKLIST.length})
+              </h3>
+            </div>
             <div className="bg-card border border-border/50 divide-y divide-border/10">
               {TEST_CHECKLIST.map((item) => (
                 <div key={item.id} className="p-md flex items-center justify-between hover:bg-muted/10 transition-colors group">
@@ -251,12 +258,15 @@ Core Features:
             </div>
 
             {isShippable && (
-              <div className="bg-green-50 border border-green-200 p-lg text-center space-y-md animate-in slide-in-from-right-4 duration-500">
-                <p className="text-xs font-bold text-green-700 uppercase tracking-widest">
+              <div className="bg-primary/10 border border-primary/20 p-lg text-center space-y-md animate-in slide-in-from-right-4 duration-500">
+                <div className="flex justify-center">
+                  <Zap className="h-8 w-8 text-primary animate-pulse" />
+                </div>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest">
                   Ready for submission
                 </p>
-                <Button asChild className="w-full rounded-none h-14 bg-green-600 hover:bg-green-700 text-white font-bold uppercase tracking-[0.2em]">
-                  <a href="/ship">Proceed to Launch</a>
+                <Button asChild className="w-full rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-[0.2em]">
+                  <Link href="/ship">Proceed to Launch</Link>
                 </Button>
               </div>
             )}
