@@ -48,6 +48,7 @@ export interface ResumeData {
     linkedin: string;
   };
   template: ResumeTemplate;
+  colorTheme: string;
 }
 
 const STORAGE_KEY = 'resumeBuilderData';
@@ -64,7 +65,8 @@ const DEFAULT_DATA: ResumeData = {
     tools: []
   },
   links: { github: '', linkedin: '' },
-  template: 'classic'
+  template: 'classic',
+  colorTheme: 'hsl(168, 60%, 40%)'
 };
 
 const SAMPLE_DATA: ResumeData = {
@@ -102,7 +104,8 @@ const SAMPLE_DATA: ResumeData = {
     tools: ['Docker', 'AWS', 'CI/CD']
   },
   links: { github: 'github.com/jdoe', linkedin: 'linkedin.com/in/jdoe' },
-  template: 'modern'
+  template: 'modern',
+  colorTheme: 'hsl(168, 60%, 40%)'
 };
 
 export function useResumeData() {
@@ -114,7 +117,6 @@ export function useResumeData() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        // Handle migration from old skills string if necessary
         if (typeof parsed.skills === 'string') {
           parsed.skills = {
             technical: parsed.skills.split(',').map((s: string) => s.trim()).filter(Boolean),

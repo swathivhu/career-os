@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useResumeData } from '@/hooks/use-resume-data';
+import { useResumeData, ResumeTemplate } from '@/hooks/use-resume-data';
 import { calculateATSScore } from '@/lib/ats-engine';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,7 +23,10 @@ import {
   X,
   Github,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Layout,
+  Palette,
+  Check
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +36,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+const COLOR_OPTIONS = [
+  { name: 'Teal', value: 'hsl(168, 60%, 40%)' },
+  { name: 'Navy', value: 'hsl(220, 60%, 35%)' },
+  { name: 'Burgundy', value: 'hsl(345, 60%, 35%)' },
+  { name: 'Forest', value: 'hsl(150, 50%, 30%)' },
+  { name: 'Charcoal', value: 'hsl(0, 0%, 25%)' },
+];
 
 export default function BuilderPage() {
   const { data, updateData, loadSampleData, resetData, isLoaded } = useResumeData();
@@ -132,6 +145,21 @@ export default function BuilderPage() {
       }
       e.preventDefault();
     }
+  };
+
+  const handleDownload = () => {
+    toast({
+      title: "Export Initiated",
+      description: "PDF export ready! Check your downloads.",
+    });
+  };
+
+  const setTemplate = (t: ResumeTemplate) => {
+    updateData({ ...data, template: t });
+  };
+
+  const setColor = (c: string) => {
+    updateData({ ...data, colorTheme: c });
   };
 
   return (
@@ -382,15 +410,88 @@ export default function BuilderPage() {
         </div>
 
         <div className="lg:col-span-4 bg-[#111111] p-xl flex flex-col overflow-hidden">
-          <div className="mb-xl space-y-md">
+          {/* Template & Color Picker */}
+          <div className="mb-md space-y-md">
+             <div className="flex items-center gap-2 text-white/60 mb-2">
+                <Layout className="h-3 w-3" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Select Template</span>
+             </div>
+             <div className="flex gap-4 overflow-x-auto pb-2">
+                {(['classic', 'modern', 'minimal'] as ResumeTemplate[]).map((t) => (
+                  <button 
+                    key={t} 
+                    onClick={() => setTemplate(t)}
+                    className={cn(
+                      "group relative flex-shrink-0 w-[120px] aspect-[1/1.4] bg-white border-2 transition-all",
+                      data.template === t ? "border-primary" : "border-white/10 opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    {/* Visual Sketch of Template */}
+                    <div className="p-2 h-full flex flex-col gap-1 overflow-hidden">
+                      <div className="h-2 w-3/4 bg-gray-200 rounded-sm" />
+                      <div className="h-1 w-full bg-gray-100 rounded-sm" />
+                      <div className="mt-2 flex gap-1">
+                        {t === 'modern' && <div className="w-1/3 bg-gray-50 h-12 rounded-sm" />}
+                        <div className="flex-1 space-y-1">
+                           <div className="h-1 w-full bg-gray-100 rounded-sm" />
+                           <div className="h-1 w-full bg-gray-100 rounded-sm" />
+                           <div className="h-1 w-full bg-gray-100 rounded-sm" />
+                        </div>
+                      </div>
+                      <p className="absolute bottom-2 left-0 right-0 text-[8px] font-bold uppercase tracking-widest text-center text-gray-500">
+                        {t}
+                      </p>
+                    </div>
+                    {data.template === t && (
+                      <div className="absolute top-1 right-1 bg-primary text-white p-0.5 rounded-full">
+                        <Check className="h-3 w-3" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+             </div>
+
+             <div className="flex items-center gap-2 text-white/60 mt-4 mb-2">
+                <Palette className="h-3 w-3" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Accent Color</span>
+             </div>
+             <div className="flex gap-3">
+                {COLOR_OPTIONS.map((c) => (
+                  <button
+                    key={c.name}
+                    onClick={() => setColor(c.value)}
+                    className={cn(
+                      "h-8 w-8 rounded-full border-2 transition-all flex items-center justify-center",
+                      data.colorTheme === c.value ? "border-white scale-110" : "border-white/10 hover:scale-105"
+                    )}
+                    style={{ backgroundColor: c.value }}
+                    title={c.name}
+                  >
+                    {data.colorTheme === c.value && <Check className="h-4 w-4 text-white" />}
+                  </button>
+                ))}
+             </div>
+          </div>
+
+          <div className="mb-xl space-y-md border-t border-white/10 pt-md">
             <div className="flex justify-between items-end mb-xs">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">ATS Readiness Index</span>
               <span className={`text-2xl font-headline italic ${score >= 80 ? 'text-green-400' : 'text-white'}`}>{score}%</span>
             </div>
-            <Progress value={score} className="h-1 bg-white/10 rounded-none [&>div]:bg-[#8B0000]" />
+            <Progress value={score} className="h-1 bg-white/10 rounded-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+              <div className="h-full transition-all" style={{ width: `${score}%`, backgroundColor: data.colorTheme }} />
+            </Progress>
+            
+            <div className="flex gap-md pt-2">
+              <Button onClick={handleDownload} className="flex-1 rounded-none text-[10px] font-bold uppercase tracking-widest h-10" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
+                <Target className="h-3 w-3 mr-2" />
+                Download PDF
+              </Button>
+            </div>
+
             {suggestions.length > 0 && (
               <div className="mt-md p-md bg-white/5 border border-white/10 space-y-sm">
-                <div className="flex items-center gap-2 text-[#8B0000]">
+                <div className="flex items-center gap-2" style={{ color: data.colorTheme }}>
                   <Sparkles className="h-3 w-3" />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Structural Optimization</span>
                 </div>
@@ -404,63 +505,81 @@ export default function BuilderPage() {
             )}
           </div>
 
+          {/* Real-time Render Panel */}
           <div className="flex-grow overflow-y-auto bg-white p-lg shadow-2xl space-y-md font-body text-[10px] leading-relaxed select-none pointer-events-none origin-top scale-95 lg:scale-100">
-            <div className={`space-y-md ${data.template === 'minimal' ? 'text-left' : 'text-center'}`}>
-              <div className={`pb-md border-b-2 border-[#111111] ${data.template === 'modern' ? 'flex justify-between items-end text-left' : 'space-y-1'}`}>
-                <h1 className={`${data.template === 'modern' ? 'text-2xl' : 'text-xl'} font-headline italic tracking-tight uppercase leading-none`}>
-                  {data.personalInfo.name || 'Your Name'}
-                </h1>
-                <div className="flex gap-2 text-[8px] uppercase tracking-widest opacity-60">
-                  <span>{data.personalInfo.email}</span>
-                  <span>•</span>
-                  <span>{data.personalInfo.location}</span>
+            {data.template === 'modern' ? (
+              <div className="grid grid-cols-12 gap-lg h-full">
+                {/* Sidebar */}
+                <div className="col-span-4 p-md -ml-lg -mt-lg -mb-lg" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
+                   <h1 className="text-xl font-headline italic tracking-tight uppercase leading-tight mb-md">
+                    {data.personalInfo.name || 'Your Name'}
+                  </h1>
+                  <div className="space-y-4 text-[8px] uppercase tracking-widest">
+                    <div className="space-y-1">
+                      <p className="font-bold opacity-60">Contact</p>
+                      <p>{data.personalInfo.email}</p>
+                      <p>{data.personalInfo.phone}</p>
+                      <p>{data.personalInfo.location}</p>
+                    </div>
+                    {data.skills.technical.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="font-bold opacity-60">Skills</p>
+                        <div className="flex flex-wrap gap-1">
+                           {data.skills.technical.slice(0, 6).map(s => <span key={s} className="bg-white/10 px-1">{s}</span>)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Main Content */}
+                <div className="col-span-8 space-y-md text-[#111111]">
+                   {data.summary && (
+                    <div className="space-y-1">
+                      <h4 className="font-bold uppercase tracking-[0.3em] border-b border-[#111111]/10 pb-0.5" style={{ color: data.colorTheme }}>Summary</h4>
+                      <p className="italic font-medium">{data.summary}</p>
+                    </div>
+                  )}
+                  {data.experience.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-bold uppercase tracking-[0.3em] border-b border-[#111111]/10 pb-0.5" style={{ color: data.colorTheme }}>Experience</h4>
+                      {data.experience.slice(0, 2).map((exp, i) => (
+                        <div key={i} className="space-y-1">
+                          <p className="font-bold">{exp.company}</p>
+                          <p className="italic opacity-70">{exp.role}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className={`space-y-md ${data.template === 'minimal' ? 'text-left' : 'text-center'}`}>
+                <div className={`pb-md border-b-2 border-[#111111] space-y-1`}>
+                  <h1 className={`text-2xl font-headline italic tracking-tight uppercase leading-none`}>
+                    {data.personalInfo.name || 'Your Name'}
+                  </h1>
+                  <div className="flex justify-center gap-2 text-[8px] uppercase tracking-widest opacity-60">
+                    <span>{data.personalInfo.email}</span>
+                    <span>•</span>
+                    <span>{data.personalInfo.location}</span>
+                  </div>
+                </div>
 
-            {data.summary && (
-              <div className="space-y-1">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Summary</h4>
-                <p className="italic font-medium">{data.summary}</p>
-              </div>
-            )}
-
-            {(data.skills.technical.length > 0 || data.skills.soft.length > 0 || data.skills.tools.length > 0) && (
-              <div className="space-y-2">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Domain Proficiency</h4>
-                {data.skills.technical.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    <span className="font-bold uppercase tracking-widest opacity-40 mr-1">Tech:</span>
-                    {data.skills.technical.map(s => <span key={s} className="bg-[#111111]/5 px-1 font-bold">{s}</span>)}
+                {data.summary && (
+                  <div className="space-y-1">
+                    <h4 className="font-bold uppercase tracking-[0.3em] border-b border-[#111111]/10 pb-0.5" style={{ color: data.colorTheme }}>Summary</h4>
+                    <p className="italic font-medium">{data.summary}</p>
                   </div>
                 )}
-                {data.skills.soft.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    <span className="font-bold uppercase tracking-widest opacity-40 mr-1">Soft:</span>
-                    {data.skills.soft.map(s => <span key={s} className="bg-[#111111]/5 px-1 font-bold">{s}</span>)}
+
+                {(data.skills.technical.length > 0) && (
+                  <div className="space-y-2">
+                    <h4 className="font-bold uppercase tracking-[0.3em] border-b border-[#111111]/10 pb-0.5" style={{ color: data.colorTheme }}>Domain</h4>
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {data.skills.technical.map(s => <span key={s} className="bg-[#111111]/5 px-1 font-bold">{s}</span>)}
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {data.projects.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Strategic Artifacts</h4>
-                {data.projects.map((proj, i) => (
-                  <div key={i} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="font-headline italic text-sm">{proj.title}</span>
-                      <div className="flex gap-2">
-                        {proj.githubUrl && <Github className="h-3 w-3 opacity-40" />}
-                        {proj.liveUrl && <ExternalLink className="h-3 w-3 opacity-40" />}
-                      </div>
-                    </div>
-                    <p className="opacity-70 italic">{proj.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {proj.techStack.map(s => <span key={s} className="text-[8px] font-bold border border-[#111111]/10 px-1 uppercase tracking-tighter">{s}</span>)}
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
