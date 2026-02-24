@@ -30,6 +30,12 @@ export function useAnalysisHistory() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
+  const updateAnalysis = (updatedResult: AnalysisResult) => {
+    const updated = history.map(item => item.id === updatedResult.id ? updatedResult : item);
+    setHistory(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
   const deleteAnalysis = (id: string) => {
     const updated = history.filter(item => item.id !== id);
     setHistory(updated);
@@ -40,5 +46,5 @@ export function useAnalysisHistory() {
     return history.find(item => item.id === id);
   };
 
-  return { history, saveAnalysis, deleteAnalysis, getAnalysis, isLoaded };
+  return { history, saveAnalysis, updateAnalysis, deleteAnalysis, getAnalysis, isLoaded };
 }

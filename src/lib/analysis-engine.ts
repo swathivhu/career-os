@@ -14,6 +14,7 @@ export interface AnalysisResult {
   checklist: { round: string; items: string[] }[];
   questions: { skill: string; question: string }[];
   readinessScore: number;
+  skillConfidenceMap?: Record<string, 'know' | 'practice'>;
 }
 
 const SKILL_CATEGORIES: Record<string, string[]> = {
@@ -104,6 +105,12 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     questions.push({ skill: 'General', question: 'Explain one challenging project you have worked on in detail.' });
   }
 
+  // Initialize confidence map as 'practice' for all detected skills
+  const skillConfidenceMap: Record<string, 'know' | 'practice'> = {};
+  Object.values(detected).flat().forEach(skill => {
+    skillConfidenceMap[skill] = 'practice';
+  });
+
   return {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -114,6 +121,7 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     plan,
     checklist,
     questions: questions.slice(0, 10),
-    readinessScore: score
+    readinessScore: score,
+    skillConfidenceMap
   };
 }
