@@ -6,7 +6,9 @@ import {
   FolderOpen, 
   User,
   Bell,
-  Search
+  Search,
+  Sparkles,
+  History
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,8 @@ export default function DashboardLayout({
 }) {
   const navItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/dashboard' },
+    { label: 'Analyze JD', icon: <Sparkles className="h-5 w-5" />, href: '/dashboard/analyze' },
+    { label: 'History', icon: <History className="h-5 w-5" />, href: '/dashboard/history' },
     { label: 'Practice', icon: <PenTool className="h-5 w-5" />, href: '/dashboard/practice' },
     { label: 'Assessments', icon: <FileCheck className="h-5 w-5" />, href: '/dashboard/assessments' },
     { label: 'Resources', icon: <FolderOpen className="h-5 w-5" />, href: '/dashboard/resources' },
@@ -31,7 +35,7 @@ export default function DashboardLayout({
       <aside className="w-64 bg-white border-r hidden md:flex flex-col">
         <div className="p-6 flex items-center gap-2 mb-4">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">P</div>
-          <span className="text-xl font-bold tracking-tight">Placement Prep</span>
+          <span className="text-xl font-bold tracking-tight text-foreground">Placement Prep</span>
         </div>
         <nav className="flex-grow px-4 space-y-1">
           {navItems.map((item) => (
