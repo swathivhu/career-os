@@ -1,11 +1,10 @@
-
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import { useResumeData } from '@/hooks/use-resume-data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 
 export default function FullPreviewPage() {
   const { data, isLoaded } = useResumeData();
@@ -15,11 +14,14 @@ export default function FullPreviewPage() {
   return (
     <div className="min-h-screen bg-white text-[#111111] flex flex-col selection:bg-[#8B0000] selection:text-white">
       {/* Mini Nav for easy return */}
-      <nav className="h-12 border-b border-[#111111]/5 px-xl flex items-center bg-[#F7F6F3]/50 sticky top-0 z-50 backdrop-blur-sm print:hidden">
+      <nav className="h-12 border-b border-[#111111]/5 px-xl flex items-center justify-between bg-[#F7F6F3]/50 sticky top-0 z-50 backdrop-blur-sm print:hidden">
          <Button asChild variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100">
             <Link href="/builder">
               <ArrowLeft className="h-3 w-3 mr-1" /> Return to Builder
             </Link>
+          </Button>
+          <Button onClick={() => window.print()} variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100">
+            <Printer className="h-3 w-3 mr-1" /> Print Manifest
           </Button>
       </nav>
 
@@ -30,13 +32,17 @@ export default function FullPreviewPage() {
             <h1 className="text-6xl font-headline italic uppercase tracking-tighter leading-none">
               {data.personalInfo.name || 'Manifest Identity'}
             </h1>
-            <div className="flex justify-center gap-md text-sm font-bold uppercase tracking-[0.2em] opacity-60">
-              <span>{data.personalInfo.email}</span>
-              <span>•</span>
-              <span>{data.personalInfo.phone}</span>
-              <span>•</span>
-              <span>{data.personalInfo.location}</span>
+            <div className="flex justify-center gap-md text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex-wrap">
+              {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
+              {data.personalInfo.phone && <span>• {data.personalInfo.phone}</span>}
+              {data.personalInfo.location && <span>• {data.personalInfo.location}</span>}
             </div>
+            {(data.links.github || data.links.linkedin) && (
+              <div className="flex justify-center gap-xl pt-md">
+                {data.links.github && <span className="text-[10px] font-bold border-b border-[#111111] uppercase tracking-widest">gh://{data.links.github}</span>}
+                {data.links.linkedin && <span className="text-[10px] font-bold border-b border-[#111111] uppercase tracking-widest">in://{data.links.linkedin}</span>}
+              </div>
+            )}
           </header>
 
           {/* Content */}
@@ -97,11 +103,31 @@ export default function FullPreviewPage() {
                 </p>
               </section>
             )}
+
+            {/* Projects */}
+            {data.projects.length > 0 && (
+              <section className="space-y-md">
+                <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-[#8B0000]">05. Strategic Artifacts</h2>
+                <div className="space-y-lg">
+                  {data.projects.map((proj, i) => (
+                    <div key={i} className="space-y-sm">
+                      <div className="flex justify-between items-baseline">
+                        <h3 className="text-2xl font-headline italic">{proj.title}</h3>
+                        <span className="text-[10px] font-bold border-b border-[#111111] opacity-40 uppercase tracking-widest">{proj.link}</span>
+                      </div>
+                      <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap italic">
+                        {proj.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           <footer className="pt-xl border-t border-[#111111]/10 text-center">
             <p className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-20 italic">
-              Manifest Generated via KodNest Premium Build System
+              Manifest Generated via AI Resume Builder Premium System
             </p>
           </footer>
         </div>
