@@ -3,6 +3,18 @@
  * Detects skills, calculates scores, and generates tailored prep content.
  */
 
+export interface Round {
+  name: string;
+  focus: string;
+  explanation: string;
+}
+
+export interface CompanyIntel {
+  size: 'Startup' | 'Mid-size' | 'Enterprise';
+  industry: string;
+  hiringFocus: string;
+}
+
 export interface AnalysisResult {
   id: string;
   createdAt: string;
@@ -15,6 +27,8 @@ export interface AnalysisResult {
   questions: { skill: string; question: string }[];
   readinessScore: number;
   skillConfidenceMap?: Record<string, 'know' | 'practice'>;
+  companyIntel: CompanyIntel;
+  roundMapping: Round[];
 }
 
 const SKILL_CATEGORIES: Record<string, string[]> = {
@@ -26,6 +40,11 @@ const SKILL_CATEGORIES: Record<string, string[]> = {
   'Testing': ['Selenium', 'Cypress', 'Playwright', 'JUnit', 'PyTest', 'Mocha', 'Chai']
 };
 
+const ENTERPRISE_LIST = [
+  'Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'TCS', 'Infosys', 'Wipro', 'Accenture', 
+  'IBM', 'Oracle', 'SAP', 'Dell', 'Capgemini', 'Cognizant', 'HCL', 'Goldman Sachs', 'Morgan Stanley'
+];
+
 export function analyzeJobDescription(company: string, role: string, jdText: string): AnalysisResult {
   const detected: Record<string, string[]> = {};
   const lowerJD = jdText.toLowerCase();
@@ -34,7 +53,6 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
   // 1. Extract Skills
   Object.entries(SKILL_CATEGORIES).forEach(([category, skills]) => {
     const found = skills.filter(skill => {
-      // Regex to find word with boundaries (e.g. "Go" shouldn't match "Google")
       const regex = new RegExp(`\\b${skill.toLowerCase().replace('.', '\\.')}\\b`, 'i');
       return regex.test(lowerJD);
     });
@@ -49,7 +67,58 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     detected['General'] = ['General fresher stack'];
   }
 
-  // 2. Readiness Score
+  // 2. Company Intel Heuristics
+  const isEnterprise = ENTERPRISE_LIST.some(e => company.toLowerCase().includes(e.toLowerCase()));
+  const intel: CompanyIntel = {
+    size: isEnterprise ? 'Enterprise' : 'Startup',
+    industry: 'Technology Services',
+    hiringFocus: isEnterprise 
+      ? 'Structured DSA, Core CS fundamentals, and process adherence.' 
+      : 'Practical problem solving, tech stack depth, and individual ownership.'
+  };
+
+  // 3. Dynamic Round Mapping
+  const rounds: Round[] = [];
+  if (intel.size === 'Enterprise') {
+    rounds.push({ 
+      name: 'Round 1: Online Assessment', 
+      focus: 'Aptitude & Basic DSA', 
+      explanation: 'Used to filter candidates based on logical speed and basic coding ability.' 
+    });
+    rounds.push({ 
+      name: 'Round 2: Technical Interview I', 
+      focus: 'Data Structures & Core CS', 
+      explanation: 'Deep dive into memory management, OS fundamentals, and complex DSA problems.' 
+    });
+    rounds.push({ 
+      name: 'Round 3: Technical Interview II', 
+      focus: 'Projects & Advanced Topics', 
+      explanation: 'Exploration of your past work and how you apply core concepts to real scenarios.' 
+    });
+    rounds.push({ 
+      name: 'Round 4: HR / Behavioral', 
+      focus: 'Culture & Communication', 
+      explanation: 'Ensuring alignment with company values and assessing long-term growth potential.' 
+    });
+  } else {
+    rounds.push({ 
+      name: 'Round 1: Practical Coding Task', 
+      focus: 'Stack Proficiency', 
+      explanation: 'Often a take-home or live coding session focusing on building a functional feature.' 
+    });
+    rounds.push({ 
+      name: 'Round 2: Technical Discussion', 
+      focus: 'System Architecture', 
+      explanation: 'Discussing tradeoffs, scalability, and how you choose tools for specific problems.' 
+    });
+    rounds.push({ 
+      name: 'Round 3: Culture & Founder Fit', 
+      focus: 'Impact & Agility', 
+      explanation: 'Focuses on your ability to work in fast-paced environments and take ownership.' 
+    });
+  }
+
+  // 4. Readiness Score
   let score = 35;
   score += Math.min(categoriesFound * 5, 30);
   if (company.trim()) score += 10;
@@ -57,27 +126,13 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
   if (jdText.length > 800) score += 10;
   score = Math.min(score, 100);
 
-  // 3. Round-wise Checklist
-  const checklist = [
-    { 
-      round: 'Round 1: Aptitude / Basics', 
-      items: ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability', 'Core Subject MCQs'] 
-    },
-    { 
-      round: 'Round 2: DSA + Core CS', 
-      items: ['Linked Lists & Trees', 'Sorting/Searching', 'OS Process Mgmt', 'DBMS Normalization'] 
-    },
-    { 
-      round: 'Round 3: Tech Interview', 
-      items: ['Project Deep Dive', ...Object.values(detected).flat().slice(0, 3).map(s => `${s} Principles`), 'System Design Basics'] 
-    },
-    { 
-      round: 'Round 4: Managerial / HR', 
-      items: ['Conflict Resolution', 'Why this company?', 'Strengths/Weaknesses', 'Career Goals'] 
-    }
-  ];
+  // 5. Checklist (Simplified mapping)
+  const checklist = rounds.map(r => ({
+    round: r.name,
+    items: [r.focus, 'Standard behavioral prep', 'Company research']
+  }));
 
-  // 4. 7-Day Plan
+  // 6. 7-Day Plan
   const plan = [
     'Day 1-2: Basics of Core CS (OS, Networks) and mental math.',
     'Day 3-4: DSA intensive. Practice 5-10 LeetCode Mediums.',
@@ -88,7 +143,7 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     'Day 7: Final revision of weak topics and company values research.'
   ];
 
-  // 5. Questions
+  // 7. Questions
   const questions: { skill: string; question: string }[] = [];
   Object.entries(detected).forEach(([cat, skills]) => {
     skills.forEach(skill => {
@@ -105,7 +160,6 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     questions.push({ skill: 'General', question: 'Explain one challenging project you have worked on in detail.' });
   }
 
-  // Initialize confidence map as 'practice' for all detected skills
   const skillConfidenceMap: Record<string, 'know' | 'practice'> = {};
   Object.values(detected).flat().forEach(skill => {
     skillConfidenceMap[skill] = 'practice';
@@ -122,6 +176,8 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
     checklist,
     questions: questions.slice(0, 10),
     readinessScore: score,
-    skillConfidenceMap
+    skillConfidenceMap,
+    companyIntel: intel,
+    roundMapping: rounds
   };
 }

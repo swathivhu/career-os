@@ -18,7 +18,9 @@ import {
   Copy,
   Download,
   Zap,
-  BookOpen
+  BookOpen,
+  Building2,
+  GitPullRequest
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
@@ -46,7 +48,6 @@ function ResultsContent() {
 
   const confidenceMap = result.skillConfidenceMap || {};
 
-  // Live score calculation
   const liveScore = useMemo(() => {
     const skills = Object.values(result.extractedSkills).flat();
     let adjustment = 0;
@@ -90,17 +91,18 @@ Strategic Roadmap for ${result.role} @ ${result.company}
 Generated: ${new Date(result.createdAt).toLocaleDateString()}
 Readiness Score: ${liveScore}%
 
+COMPANY INTEL
+Size: ${result.companyIntel?.size}
+Hiring Focus: ${result.companyIntel?.hiringFocus}
+
+INTERVIEW ROUNDS
+${result.roundMapping?.map((r, i) => `Round ${i + 1}: ${r.name} (${r.focus})\n${r.explanation}`).join('\n\n')}
+
 7-DAY PLAN
 ${result.plan.map((day, i) => `Day ${i + 1}: ${day}`).join('\n')}
 
-INTERVIEW ROUNDS CHECKLIST
-${result.checklist.map(r => `\n${r.round}\n${r.items.map(item => `- ${item}`).join('\n')}`).join('\n')}
-
 TOP 10 INTERVIEW QUESTIONS
 ${result.questions.map((q, i) => `${i + 1}. [${q.skill}] ${q.question}`).join('\n')}
-
-JD SUMMARY
-${result.jdText.substring(0, 500)}...
     `.trim();
 
     const element = document.createElement("a");
@@ -142,16 +144,76 @@ ${result.jdText.substring(0, 500)}...
         <Button variant="outline" size="sm" onClick={() => copyToClipboard(result.plan.join('\n'), "7-Day Plan")} className="gap-2">
           <Copy className="h-3.5 w-3.5" /> Copy Plan
         </Button>
-        <Button variant="outline" size="sm" onClick={() => copyToClipboard(result.questions.map(q => q.question).join('\n'), "Questions")} className="gap-2">
-          <Copy className="h-3.5 w-3.5" /> Copy Questions
-        </Button>
-        <Button variant="outline" size="sm" onClick={downloadAsTxt} className="gap-2">
-          <Download className="h-3.5 w-3.5" /> Download TXT
+        <Button variant="outline" size="sm" onClick={() => downloadAsTxt()} className="gap-2">
+          <Download className="h-3.5 w-3.5" /> Download Report
         </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          {/* Company Intel Section */}
+          <Card className="border-none shadow-sm bg-muted/20">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-primary" />
+                Company Intelligence
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Size Category</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-xs">{result.companyIntel?.size}</Badge>
+                  <span className="text-xs text-muted-foreground">{result.companyIntel?.industry}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Typical Hiring Focus</p>
+                <p className="text-sm font-medium leading-relaxed italic opacity-80">
+                  {result.companyIntel?.hiringFocus}
+                </p>
+              </div>
+              <div className="md:col-span-2 pt-2">
+                <p className="text-[10px] text-muted-foreground italic">
+                  Demo Mode: Company intel generated heuristically based on historical patterns.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Round Mapping Section */}
+          <Card className="border-none shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <GitPullRequest className="h-5 w-5 text-primary" />
+                Expected Interview Flow
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-8 relative">
+              <div className="absolute left-8 top-10 bottom-10 w-0.5 bg-muted hidden md:block" />
+              {result.roundMapping?.map((round, idx) => (
+                <div key={idx} className="flex gap-6 relative group">
+                  <div className="hidden md:flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-white border-2 border-primary flex items-center justify-center text-primary font-bold z-10 group-hover:bg-primary group-hover:text-white transition-colors">
+                      {idx + 1}
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2 pb-4">
+                    <h4 className="font-bold text-lg">{round.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-bold text-primary border-primary/20">
+                        Focus: {round.focus}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {round.explanation}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card className="border-none shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -189,30 +251,6 @@ ${result.jdText.substring(0, 500)}...
               <p className="text-[10px] text-muted-foreground mt-4 italic">
                 Tip: Click tags to toggle proficiency. Score updates automatically.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Layout className="h-5 w-5 text-primary" />
-                Interview Rounds Checklist
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {result.checklist.map((round, idx) => (
-                <div key={idx} className="space-y-3">
-                  <h4 className="font-bold text-foreground/90">{round.round}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {round.items.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg text-sm group cursor-default">
-                        <CheckCircle2 className="h-4 w-4 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
             </CardContent>
           </Card>
 
