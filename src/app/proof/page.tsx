@@ -58,28 +58,33 @@ export default function ProofPage() {
 ------------------------------------------
 Placement Readiness Platform — Final Submission
 
-Lovable Project:
-${links.lovable}
+Lovable Project: ${links.lovable}
+GitHub Repository: ${links.github}
+Live Deployment: ${links.deployment}
 
-GitHub Repository:
-${links.github}
-
-Live Deployment:
-${links.deployment}
-
-Core Features:
-- Heuristic skill extraction
-- 7-day strategic plan
-- Interactive proficiency matrix
-- Real-time readiness scoring
+Core Capabilities:
+- JD skill extraction (deterministic)
+- Round mapping engine
+- 7-day prep plan
+- Interactive readiness scoring
+- History persistence
 ------------------------------------------
 `.trim();
     
     navigator.clipboard.writeText(text);
     toast({
-      title: "Submission Copied",
-      description: "Final project manifest copied to clipboard.",
+      title: "Submission Manifest Copied",
+      description: "Final project data captured to system clipboard.",
     });
+  };
+
+  const isValidUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   if (!isLoaded) return null;
@@ -88,18 +93,15 @@ Core Features:
     <div className="flex flex-col min-h-screen bg-background pb-xl">
       <TopBar />
       <ContextHeader 
-        title="Proof Matrix" 
-        subtitle="Final verification and artifact collection for Project 2 — Placement Readiness Platform."
+        title="Verification Matrix" 
+        subtitle="Final artifact collection and strategic verification for the Placement Readiness Platform."
       />
       
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-xl grid grid-cols-1 lg:grid-cols-12 gap-xl">
-        {/* Left Column: Verification & Artifacts */}
         <div className="lg:col-span-8 space-y-xl">
-          
-          {/* Project Status Header */}
           <div className={`p-lg border-2 ${isShippable ? 'border-green-500/20 bg-green-500/5' : 'border-primary/20 bg-primary/5'} flex flex-col md:flex-row justify-between items-center gap-md transition-all duration-500`}>
             <div className="space-y-xs text-center md:text-left">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Project 2 Status</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Strategic Status</span>
               <div className="flex items-center gap-sm justify-center md:justify-start">
                 <h2 className="text-3xl font-headline italic">
                   {status}
@@ -111,15 +113,10 @@ Core Features:
               </div>
             </div>
             
-            {passCount < TEST_CHECKLIST.length ? (
+            {status !== "Shipped" ? (
               <div className="flex items-center gap-xs text-amber-600 font-bold uppercase tracking-widest text-xs animate-pulse">
                 <AlertTriangle className="h-4 w-4" />
-                Resolve all {TEST_CHECKLIST.length - passCount} remaining tests to ship.
-              </div>
-            ) : !isShippable ? (
-              <div className="flex items-center gap-xs text-primary font-bold uppercase tracking-widest text-xs">
-                <ShieldCheck className="h-4 w-4" />
-                Tests passed. Provide links to finalize.
+                Resolve all tests and provide links to finalize.
               </div>
             ) : (
               <Button onClick={handleCopySubmission} className="rounded-none h-12 bg-foreground text-background font-bold uppercase tracking-widest px-lg">
@@ -129,13 +126,10 @@ Core Features:
             )}
           </div>
 
-          {/* Section A: Checklist */}
           <div className="space-y-md">
-            <div className="flex justify-between items-end">
-              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs flex-1">
-                01. Verification Matrix ({passCount}/{TEST_CHECKLIST.length})
-              </h3>
-            </div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs flex-1">
+              01. Functional Verification ({passCount}/{TEST_CHECKLIST.length})
+            </h3>
             <div className="bg-card border border-border/50 divide-y divide-border/10">
               {TEST_CHECKLIST.map((item) => (
                 <div key={item.id} className="p-md flex items-center justify-between hover:bg-muted/10 transition-colors group">
@@ -170,7 +164,6 @@ Core Features:
             </div>
           </div>
 
-          {/* Section B: Artifact Collection */}
           <div className="space-y-md">
             <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-primary/60 border-b border-primary/10 pb-xs">
               02. Artifact Collection
@@ -185,8 +178,8 @@ Core Features:
                     onChange={(e) => updateLink("lovable", e.target.value)}
                     className="rounded-none border-border/60 h-12 bg-background/50 focus:ring-primary"
                   />
-                  <div className={`flex items-center justify-center w-12 border border-border/50 ${links.lovable ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
-                    {links.lovable ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
+                  <div className={`flex items-center justify-center w-12 border border-border/50 ${isValidUrl(links.lovable) ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
+                    {isValidUrl(links.lovable) ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
                   </div>
                 </div>
               </div>
@@ -199,8 +192,8 @@ Core Features:
                     onChange={(e) => updateLink("github", e.target.value)}
                     className="rounded-none border-border/60 h-12 bg-background/50 focus:ring-primary"
                   />
-                  <div className={`flex items-center justify-center w-12 border border-border/50 ${links.github ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
-                    {links.github ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
+                  <div className={`flex items-center justify-center w-12 border border-border/50 ${isValidUrl(links.github) ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
+                    {isValidUrl(links.github) ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
                   </div>
                 </div>
               </div>
@@ -213,8 +206,8 @@ Core Features:
                     onChange={(e) => updateLink("deployment", e.target.value)}
                     className="rounded-none border-border/60 h-12 bg-background/50 focus:ring-primary"
                   />
-                  <div className={`flex items-center justify-center w-12 border border-border/50 ${links.deployment ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
-                    {links.deployment ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
+                  <div className={`flex items-center justify-center w-12 border border-border/50 ${isValidUrl(links.deployment) ? 'bg-green-50 text-green-600' : 'bg-muted'}`}>
+                    {isValidUrl(links.deployment) ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5 opacity-20" />}
                   </div>
                 </div>
               </div>
@@ -222,7 +215,6 @@ Core Features:
           </div>
         </div>
 
-        {/* Right Column: Step Completion Summary */}
         <aside className="lg:col-span-4 space-y-xl">
           <div className="sticky top-24 space-y-lg">
             <div className="bg-card border border-border/50 p-lg space-y-md">
@@ -252,7 +244,7 @@ Core Features:
                   className="w-full rounded-none h-10 border-border hover:bg-destructive/5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-destructive"
                 >
                   <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                  Reset Project Matrix
+                  Reset Manifest
                 </Button>
               </div>
             </div>
@@ -263,10 +255,10 @@ Core Features:
                   <Zap className="h-8 w-8 text-primary animate-pulse" />
                 </div>
                 <p className="text-xs font-bold text-primary uppercase tracking-widest">
-                  Ready for submission
+                  Strategic Requirements Met
                 </p>
                 <Button asChild className="w-full rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-[0.2em]">
-                  <Link href="/ship">Proceed to Launch</Link>
+                  <Link href="/prp/08-ship">Proceed to Launch</Link>
                 </Button>
               </div>
             )}

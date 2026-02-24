@@ -5,7 +5,7 @@ import { ContextHeader } from "@/components/layout/ContextHeader";
 import { useTestStatus } from "@/hooks/use-test-status";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
-import { Rocket, PackageCheck, Globe, CheckCircle2 } from "lucide-react";
+import { Rocket, PackageCheck, Globe, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -25,11 +25,11 @@ export default function ShipPage() {
       <TopBar />
       <ContextHeader 
         title="Deployment Hub" 
-        subtitle="Final verification and production release manifest. Project 2 is fully authenticated."
+        subtitle="Final verification and production release manifest. Project verified & shippable."
       />
       
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-xl flex flex-col items-center justify-center">
-        <div className="max-w-[600px] text-center space-y-xl animate-in fade-in duration-1000">
+        <div className="max-w-[720px] text-center space-y-xl animate-in fade-in duration-1000">
           <div className="relative inline-block">
             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
             <div className="relative p-xl bg-card border border-primary/20 rounded-full">
@@ -37,27 +37,32 @@ export default function ShipPage() {
             </div>
           </div>
 
-          <div className="space-y-md">
-            <h2 className="text-5xl font-headline italic">Project 2 Shipped Successfully.</h2>
-            <p className="text-xl text-muted-foreground font-medium italic opacity-80 leading-relaxed">
-              "The strategic engine for the Placement Readiness Platform has been verified and deployed. All analysis parameters are fully operational."
-            </p>
+          <div className="space-y-lg">
+            <h2 className="text-5xl font-headline italic leading-tight">Placement Readiness Platform Shipped Successfully.</h2>
+            <div className="space-y-md border-y border-border/10 py-lg">
+              <p className="text-xl text-foreground font-medium italic opacity-90 leading-relaxed">
+                "You built a real product. Not a tutorial. Not a clone. A structured tool that solves a real problem."
+              </p>
+              <p className="text-lg text-primary font-bold uppercase tracking-widest italic">
+                This is your proof of work.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-md text-left">
             <div className="p-md bg-white border border-border/50 space-y-2">
               <div className="flex items-center gap-xs">
                 <PackageCheck className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Verification</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Functional Integrity</span>
               </div>
-              <p className="text-sm font-bold uppercase">10/10 Tests Passed</p>
+              <p className="text-sm font-bold uppercase">10/10 Tests Authenticated</p>
             </div>
             <div className="p-md bg-white border border-border/50 space-y-2">
               <div className="flex items-center gap-xs">
-                <Globe className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Distribution</span>
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Strategic Artifacts</span>
               </div>
-              <p className="text-sm font-bold uppercase">Production Manifest</p>
+              <p className="text-sm font-bold uppercase">Production Manifest Locked</p>
             </div>
           </div>
 

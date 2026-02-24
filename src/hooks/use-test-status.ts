@@ -33,8 +33,8 @@ export function useTestStatus() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const storedTests = localStorage.getItem("job_tracker_tests");
-    const storedLinks = localStorage.getItem("job_tracker_links");
+    const storedTests = localStorage.getItem("prp_tests");
+    const storedLinks = localStorage.getItem("prp_final_submission");
     
     if (storedTests) {
       try {
@@ -61,30 +61,42 @@ export function useTestStatus() {
       : [...checkedIds, id];
     
     setCheckedIds(newIds);
-    localStorage.setItem("job_tracker_tests", JSON.stringify(newIds));
+    localStorage.setItem("prp_tests", JSON.stringify(newIds));
   };
 
   const updateLink = (key: keyof ProjectLinks, value: string) => {
     const newLinks = { ...links, [key]: value };
     setLinks(newLinks);
-    localStorage.setItem("job_tracker_links", JSON.stringify(newLinks));
+    localStorage.setItem("prp_final_submission", JSON.stringify(newLinks));
   };
 
   const resetTests = () => {
     setCheckedIds([]);
     setLinks({ lovable: "", github: "", deployment: "" });
-    localStorage.removeItem("job_tracker_tests");
-    localStorage.removeItem("job_tracker_links");
+    localStorage.removeItem("prp_tests");
+    localStorage.removeItem("prp_final_submission");
   };
 
   const passCount = checkedIds.length;
   const isFullyVerified = passCount === TEST_CHECKLIST.length;
-  const hasAllLinks = !!(links.lovable && links.github && links.deployment);
+  
+  const isValidUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const hasAllLinks = !!(links.lovable && links.github && links.deployment && 
+                       isValidUrl(links.lovable) && isValidUrl(links.github) && isValidUrl(links.deployment));
+  
   const isShippable = isFullyVerified && hasAllLinks;
 
   const getStatus = () => {
     if (isShippable) return "Shipped";
-    if (passCount > 0 || hasAllLinks) return "In Progress";
+    if (passCount > 0 || links.lovable || links.github || links.deployment) return "In Progress";
     return "Not Started";
   };
 
