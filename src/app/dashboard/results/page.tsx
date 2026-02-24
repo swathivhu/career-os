@@ -23,7 +23,7 @@ import {
   GitPullRequest
 } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from '@/components/ui/toast';
+import { toast } from '@/hooks/use-toast';
 
 function ResultsContent() {
   const searchParams = useSearchParams();
@@ -31,7 +31,8 @@ function ResultsContent() {
   const { getAnalysis, updateAnalysis, isLoaded } = useAnalysisHistory();
 
   const result = useMemo(() => (id && isLoaded ? getAnalysis(id) : null), [id, isLoaded, getAnalysis]);
-  const confidenceMap = result?.skillConfidenceMap || {};
+  
+  const confidenceMap = useMemo(() => result?.skillConfidenceMap || {}, [result]);
 
   const liveScore = useMemo(() => {
     if (!result) return 0;
