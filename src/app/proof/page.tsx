@@ -8,6 +8,7 @@ import { useResumeData } from '@/hooks/use-resume-data';
 import { calculateATSScore } from '@/lib/ats-engine';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 
 export default function BuilderProofPage() {
