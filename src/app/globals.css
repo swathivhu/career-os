@@ -4,35 +4,35 @@
 
 @layer base {
   :root {
-    --background: 40 10% 96%; /* #F7F6F3 off-white */
-    --foreground: 0 0% 6.7%;  /* #111111 primary text */
+    --background: 245 20% 98%;
+    --foreground: 245 40% 10%;
     
-    --card: 40 10% 98%;
-    --card-foreground: 0 0% 6.7%;
+    --card: 0 0% 100%;
+    --card-foreground: 245 40% 10%;
     
-    --popover: 40 10% 98%;
-    --popover-foreground: 0 0% 6.7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 245 40% 10%;
     
-    --primary: 0 100% 27.3%; /* #8B0000 deep red */
-    --primary-foreground: 40 10% 96%;
+    --primary: 245 58% 51%;
+    --primary-foreground: 0 0% 100%;
     
-    --secondary: 40 5% 90%;
-    --secondary-foreground: 0 0% 6.7%;
+    --secondary: 245 20% 90%;
+    --secondary-foreground: 245 40% 15%;
     
-    --muted: 40 5% 92%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 245 10% 95%;
+    --muted-foreground: 245 10% 40%;
     
-    --accent: 0 100% 27.3%;
-    --accent-foreground: 40 10% 96%;
+    --accent: 245 58% 51%;
+    --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 84% 45%;
-    --destructive-foreground: 40 10% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
-    --ring: 0 100% 27.3%;
+    --border: 245 15% 90%;
+    --input: 245 15% 90%;
+    --ring: 245 58% 51%;
     
-    --radius: 2px; /* Subtle radius */
+    --radius: 0.75rem;
   }
 }
 
@@ -41,20 +41,10 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary selection:text-primary-foreground;
-    line-height: 1.7;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-headline font-semibold tracking-tight;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
-/* Transitions */
 .transition-standard {
   @apply transition-all duration-200 ease-in-out;
-}
-
-/* Layout Specifics */
-.main-content-area {
-  @apply flex flex-col md:flex-row gap-xl max-w-[1400px] mx-auto w-full px-xl py-lg;
 }

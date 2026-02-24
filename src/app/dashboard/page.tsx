@@ -1,150 +1,72 @@
-"use client";
-
-import { useState, useMemo } from "react";
-import { TopBar } from "@/components/layout/TopBar";
-import { ContextHeader } from "@/components/layout/ContextHeader";
-import { ProofFooter } from "@/components/layout/ProofFooter";
-import { SecondaryPanel } from "@/components/layout/SecondaryPanel";
-import { JOBS_DATA, Job } from "@/lib/jobs-data";
-import { JobCard } from "@/components/jobs/JobCard";
-import { JobFilterBar } from "@/components/jobs/JobFilterBar";
-import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
-import { useSavedJobs } from "@/hooks/use-saved-jobs";
-import { useJobStatus } from "@/hooks/use-job-status";
-import { useSettings } from "@/hooks/use-settings";
-import { Ghost } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Target, Zap, Clock, TrendingUp } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { settings } = useSettings();
-  const [filters, setFilters] = useState({
-    search: "",
-    location: "",
-    mode: "",
-    experience: "",
-    source: "",
-    status: "",
-    matchesOnly: false,
-  });
-
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const { savedIds, toggleSave } = useSavedJobs();
-  const { statuses } = useJobStatus();
-
-  const scoredJobs = useMemo(() => {
-    return JOBS_DATA.map(job => {
-      if (!settings) return { ...job, matchScore: 0 };
-      
-      let score = 0;
-      const keywords = settings.keywords.toLowerCase().split(",").map(k => k.trim());
-      keywords.forEach(kw => {
-        if (kw && (job.title.toLowerCase().includes(kw) || job.description.toLowerCase().includes(kw))) {
-          score += 30;
-        }
-      });
-      if (settings.location && job.location.toLowerCase().includes(settings.location.toLowerCase())) {
-        score += 20;
-      }
-      if (job.mode.toLowerCase() === settings.mode.toLowerCase()) {
-        score += 20;
-      }
-      const expMap: Record<string, string[]> = {
-        'fresher': ['Fresher', '0-1'],
-        'mid': ['1-3', '3-5'],
-        'senior': ['3-5'],
-      };
-      if (expMap[settings.experience]?.includes(job.experience)) {
-        score += 30;
-      }
-      return { ...job, matchScore: Math.min(score, 100) };
-    });
-  }, [settings]);
-
-  const filteredJobs = useMemo(() => {
-    return scoredJobs.filter(job => {
-      const matchesSearch = !filters.search || 
-        job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        job.company.toLowerCase().includes(filters.search.toLowerCase()) ||
-        job.skills.some(s => s.toLowerCase().includes(filters.search.toLowerCase()));
-      
-      const matchesLocation = !filters.location || job.location === filters.location;
-      const matchesMode = !filters.mode || job.mode === filters.mode;
-      const matchesExp = !filters.experience || job.experience === filters.experience;
-      const matchesSource = !filters.source || job.source === filters.source;
-      
-      const currentStatus = statuses[job.id] || 'Not Applied';
-      const matchesStatus = !filters.status || currentStatus === filters.status;
-
-      const matchesScoring = !filters.matchesOnly || job.matchScore > 0;
-
-      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource && matchesStatus && matchesScoring;
-    }).sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
-  }, [filters, statuses, scoredJobs]);
+  const stats = [
+    { label: 'Completed Problems', value: '124', icon: <Target className="h-4 w-4" />, color: 'text-indigo-600' },
+    { label: 'Assessments Taken', value: '12', icon: <Zap className="h-4 w-4" />, color: 'text-amber-600' },
+    { label: 'Practice Hours', value: '45.5h', icon: <Clock className="h-4 w-4" />, color: 'text-emerald-600' },
+    { label: 'Overall Percentile', value: '92nd', icon: <TrendingUp className="h-4 w-4" />, color: 'text-primary' },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-xl">
-      <TopBar />
-      <ContextHeader 
-        title="Active Pulse" 
-        subtitle="Real-time monitoring of job opportunities matching your profile parameters."
-      />
-      
-      <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-lg flex flex-col md:flex-row gap-xl">
-        {/* Primary Workspace (70%) */}
-        <div className="w-full md:w-[70%] space-y-md">
-          <JobFilterBar filters={filters} setFilters={setFilters} />
-          
-          <div className="space-y-xs">
-            <div className="flex justify-between items-center mb-sm px-xs">
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
-                Matched Opportunities ({filteredJobs.length})
-              </h2>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60">
-                Sorted by Latest
-              </span>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Welcome back, John! 👋</h1>
+        <p className="text-muted-foreground">Here's an overview of your placement preparation.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => (
+          <Card key={idx} className="border-none shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className={`p-2 rounded-lg bg-muted ${stat.color}`}>
+                  {stat.icon}
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2 border-none shadow-sm">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">#</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold">Solved "Reverse a Linked List"</p>
+                    <p className="text-xs text-muted-foreground">Data Structures • 2 hours ago</p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-xs">Review</Button>
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
 
-            {filteredJobs.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
-                {filteredJobs.map(job => (
-                  <JobCard 
-                    key={job.id} 
-                    job={job} 
-                    onView={setSelectedJob}
-                    onSave={toggleSave}
-                    isSaved={savedIds.includes(job.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-xl space-y-md opacity-30 select-none border border-dashed border-border mt-md">
-                <div className="flex justify-center">
-                  <Ghost className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <div className="space-y-xs">
-                  <h2 className="text-2xl font-headline italic">No matches found.</h2>
-                  <p className="text-sm font-medium uppercase tracking-[0.2em]">
-                    Try adjusting your filters to broaden the scope.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Secondary Panel (30%) */}
-        <aside className="w-full md:w-[30%]">
-          <div className="sticky top-24">
-            <SecondaryPanel />
-          </div>
-        </aside>
-      </main>
-
-      <JobDetailsModal 
-        job={selectedJob} 
-        onClose={() => setSelectedJob(null)} 
-      />
-      
-      <ProofFooter />
+        <Card className="border-none shadow-sm bg-primary text-primary-foreground">
+          <CardHeader>
+            <CardTitle className="text-white">Upcoming Assessment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-white/10 rounded-xl space-y-1">
+              <p className="text-sm font-bold">General Aptitude Test</p>
+              <p className="text-xs opacity-70">Scheduled: Tomorrow at 10:00 AM</p>
+            </div>
+            <Button variant="secondary" className="w-full font-bold">Set Reminder</Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
