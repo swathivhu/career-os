@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
+import { Menu, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,9 +12,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTestStatus } from "@/hooks/use-test-status";
 
 export function TopBar() {
   const pathname = usePathname();
+  const { isFullyVerified } = useTestStatus();
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
@@ -24,20 +26,28 @@ export function TopBar() {
     { name: "Proof", href: "/proof" },
   ];
 
+  if (isFullyVerified) {
+    navLinks.push({ name: "Ship", href: "/ship" });
+  }
+
   const NavItems = ({ className, onItemClick }: { className?: string; onItemClick?: () => void }) => (
     <nav className={cn("flex items-center", className)}>
       {navLinks.map((link) => {
         const isActive = pathname === link.href;
+        const isShip = link.name === "Ship";
+        
         return (
           <Link
             key={link.href}
             href={link.href}
             onClick={onItemClick}
             className={cn(
-              "relative px-sm py-xs text-[10px] font-bold uppercase tracking-[0.2em] transition-standard hover:text-primary",
-              isActive ? "text-primary" : "text-muted-foreground"
+              "relative px-sm py-xs text-[10px] font-bold uppercase tracking-[0.2em] transition-standard hover:text-primary flex items-center gap-xs",
+              isActive ? "text-primary" : "text-muted-foreground",
+              isShip && "text-primary animate-pulse"
             )}
           >
+            {isShip && <Rocket className="h-3 w-3" />}
             {link.name}
             {isActive && (
               <span className="absolute bottom-0 left-sm right-sm h-[2px] bg-primary animate-in fade-in slide-in-from-bottom-1" />

@@ -11,10 +11,9 @@ import {
   Eye, 
   ExternalLink,
   IndianRupee,
-  CheckCircle2,
   Clock,
-  XCircle,
-  ChevronDown
+  ChevronDown,
+  Target
 } from "lucide-react";
 import { useJobStatus, JobStatus } from "@/hooks/use-job-status";
 import { toast } from "@/hooks/use-toast";
@@ -26,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface JobCardProps {
-  job: Job;
+  job: Job & { matchScore?: number };
   onView: (job: Job) => void;
   onSave: (job: Job) => void;
   isSaved: boolean;
@@ -72,9 +71,17 @@ export function JobCard({ job, onView, onSave, isSaved }: JobCardProps) {
               {getStatusBadge(currentStatus)}
             </div>
           </div>
-          <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-bold text-[10px] uppercase tracking-widest">
-            {job.source}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-bold text-[10px] uppercase tracking-widest">
+              {job.source}
+            </Badge>
+            {job.matchScore !== undefined && job.matchScore > 0 && (
+              <div className="flex items-center gap-1 text-[9px] font-bold text-green-600 uppercase tracking-widest">
+                <Target className="h-3 w-3" />
+                {job.matchScore}% Match
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-y-xs gap-x-md text-[11px] font-bold uppercase tracking-wider text-muted-foreground">

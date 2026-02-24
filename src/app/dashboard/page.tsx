@@ -11,9 +11,11 @@ import { JobFilterBar } from "@/components/jobs/JobFilterBar";
 import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
 import { useSavedJobs } from "@/hooks/use-saved-jobs";
 import { useJobStatus } from "@/hooks/use-job-status";
+import { useSettings } from "@/hooks/use-settings";
 import { Ghost } from "lucide-react";
 
 export default function DashboardPage() {
+  const { settings } = useSettings();
   const [filters, setFilters] = useState({
     search: "",
     location: "",
@@ -21,14 +23,44 @@ export default function DashboardPage() {
     experience: "",
     source: "",
     status: "",
+    matchesOnly: false,
   });
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const { savedIds, toggleSave } = useSavedJobs();
-  const { statuses, isLoaded: statusesLoaded } = useJobStatus();
+  const { statuses } = useJobStatus();
+
+  const scoredJobs = useMemo(() => {
+    return JOBS_DATA.map(job => {
+      if (!settings) return { ...job, matchScore: 0 };
+      
+      let score = 0;
+      const keywords = settings.keywords.toLowerCase().split(",").map(k => k.trim());
+      keywords.forEach(kw => {
+        if (kw && (job.title.toLowerCase().includes(kw) || job.description.toLowerCase().includes(kw))) {
+          score += 30;
+        }
+      });
+      if (settings.location && job.location.toLowerCase().includes(settings.location.toLowerCase())) {
+        score += 20;
+      }
+      if (job.mode.toLowerCase() === settings.mode.toLowerCase()) {
+        score += 20;
+      }
+      const expMap: Record<string, string[]> = {
+        'fresher': ['Fresher', '0-1'],
+        'mid': ['1-3', '3-5'],
+        'senior': ['3-5'],
+      };
+      if (expMap[settings.experience]?.includes(job.experience)) {
+        score += 30;
+      }
+      return { ...job, matchScore: Math.min(score, 100) };
+    });
+  }, [settings]);
 
   const filteredJobs = useMemo(() => {
-    return JOBS_DATA.filter(job => {
+    return scoredJobs.filter(job => {
       const matchesSearch = !filters.search || 
         job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
         job.company.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -42,9 +74,11 @@ export default function DashboardPage() {
       const currentStatus = statuses[job.id] || 'Not Applied';
       const matchesStatus = !filters.status || currentStatus === filters.status;
 
-      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource && matchesStatus;
+      const matchesScoring = !filters.matchesOnly || job.matchScore > 0;
+
+      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource && matchesStatus && matchesScoring;
     }).sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
-  }, [filters, statuses]);
+  }, [filters, statuses, scoredJobs]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-xl">

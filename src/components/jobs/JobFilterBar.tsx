@@ -8,6 +8,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
 
 interface FilterState {
@@ -17,6 +19,7 @@ interface FilterState {
   experience: string;
   source: string;
   status: string;
+  matchesOnly: boolean;
 }
 
 interface JobFilterBarProps {
@@ -25,7 +28,7 @@ interface JobFilterBarProps {
 }
 
 export function JobFilterBar({ filters, setFilters }: JobFilterBarProps) {
-  const updateFilter = (key: keyof FilterState, value: string) => {
+  const updateFilter = (key: keyof FilterState, value: any) => {
     setFilters({ ...filters, [key]: value === 'all' ? '' : value });
   };
 
@@ -96,22 +99,18 @@ export function JobFilterBar({ filters, setFilters }: JobFilterBarProps) {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-xs hidden md:block">
-            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Source</label>
-            <Select value={filters.source || "all"} onValueChange={(v) => updateFilter('source', v)}>
-              <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-28 focus:ring-primary">
-                <SelectValue placeholder="Any" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
-                <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                <SelectItem value="Naukri">Naukri</SelectItem>
-                <SelectItem value="Indeed">Indeed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+      </div>
+
+      <div className="flex items-center space-x-2 pt-xs">
+        <Switch 
+          id="matches-only" 
+          checked={filters.matchesOnly}
+          onCheckedChange={(checked) => updateFilter('matchesOnly', checked)}
+        />
+        <Label htmlFor="matches-only" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">
+          Show Only Matches (Match Score &gt; 0)
+        </Label>
       </div>
     </div>
   );
