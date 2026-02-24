@@ -23,16 +23,28 @@ import {
   GitPullRequest
 } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast';
 
 function ResultsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const { getAnalysis, updateAnalysis, isLoaded } = useAnalysisHistory();
 
-  if (!isLoaded) return null;
+  const result = useMemo(() => (id && isLoaded ? getAnalysis(id) : null), [id, isLoaded, getAnalysis]);
+  const confidenceMap = result?.skillConfidenceMap || {};
 
-  const result = id ? getAnalysis(id) : null;
+  const liveScore = useMemo(() => {
+    if (!result) return 0;
+    const skills = Object.values(result.extractedSkills).flat();
+    let adjustment = 0;
+    skills.forEach(skill => {
+      if (confidenceMap[skill] === 'know') adjustment += 2;
+      else if (confidenceMap[skill] === 'practice') adjustment -= 2;
+    });
+    return Math.max(0, Math.min(100, result.readinessScore + adjustment));
+  }, [result, confidenceMap]);
+
+  if (!isLoaded) return null;
 
   if (!result) {
     return (
@@ -45,18 +57,6 @@ function ResultsContent() {
       </div>
     );
   }
-
-  const confidenceMap = result.skillConfidenceMap || {};
-
-  const liveScore = useMemo(() => {
-    const skills = Object.values(result.extractedSkills).flat();
-    let adjustment = 0;
-    skills.forEach(skill => {
-      if (confidenceMap[skill] === 'know') adjustment += 2;
-      else if (confidenceMap[skill] === 'practice') adjustment -= 2;
-    });
-    return Math.max(0, Math.min(100, result.readinessScore + adjustment));
-  }, [result, confidenceMap]);
 
   const toggleSkillConfidence = (skill: string) => {
     const current = confidenceMap[skill] || 'practice';
