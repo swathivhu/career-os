@@ -47,12 +47,14 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline font-semibold tracking-tight;
   }
-  p {
-    @apply max-w-[720px];
-  }
 }
 
 /* Transitions */
 .transition-standard {
   @apply transition-all duration-200 ease-in-out;
+}
+
+/* Layout Specifics */
+.main-content-area {
+  @apply flex flex-col md:flex-row gap-xl max-w-[1400px] mx-auto w-full px-xl py-lg;
 }

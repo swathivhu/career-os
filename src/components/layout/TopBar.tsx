@@ -1,128 +1,41 @@
-
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Menu, Rocket, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { useTestStatus } from "@/hooks/use-test-status";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export function TopBar() {
-  const pathname = usePathname();
-  const { isShippable, status } = useTestStatus();
-
-  const navLinks = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Saved", href: "/saved" },
-    { name: "Digest", href: "/digest" },
-    { name: "Settings", href: "/settings" },
-    { name: "Proof", href: "/proof" },
-  ];
-
-  if (isShippable) {
-    navLinks.push({ name: "Ship", href: "/ship" });
-  }
-
-  const NavItems = ({ className, onItemClick }: { className?: string; onItemClick?: () => void }) => (
-    <nav className={cn("flex items-center", className)}>
-      {navLinks.map((link) => {
-        const isActive = pathname === link.href;
-        const isShip = link.name === "Ship";
-        
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            onClick={onItemClick}
-            className={cn(
-              "relative px-sm py-xs text-[10px] font-bold uppercase tracking-[0.2em] transition-standard hover:text-primary flex items-center gap-xs",
-              isActive ? "text-primary" : "text-muted-foreground",
-              isShip && "text-green-600 animate-pulse"
-            )}
-          >
-            {isShip ? <CheckCircle2 className="h-3 w-3" /> : null}
-            {link.name}
-            {isActive && (
-              <span className="absolute bottom-0 left-sm right-sm h-[2px] bg-primary animate-in fade-in slide-in-from-bottom-1" />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-
+  const { status, passCount } = useTestStatus();
+  
   return (
-    <div className="w-full border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 px-xl h-16 flex items-center justify-between">
-      <div className="flex items-center gap-xs">
-        <Link href="/" className="flex items-center gap-xs group">
-          <span className="font-headline font-semibold text-xl uppercase tracking-widest text-primary group-hover:opacity-80 transition-standard">
-            KodNest
-          </span>
-          <span className="hidden md:inline text-muted-foreground text-[10px] font-bold uppercase tracking-[0.3em] opacity-50">
-            Premium Build
-          </span>
+    <div className="w-full h-16 bg-card border-b border-border flex items-center justify-between px-xl sticky top-0 z-50">
+      <div className="flex items-center gap-md">
+        <Link href="/" className="font-headline text-xl font-bold tracking-widest text-foreground uppercase">
+          KodNest
         </Link>
+        <div className="h-6 w-[1px] bg-border hidden md:block" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground hidden md:inline">
+          Premium Build System
+        </span>
       </div>
 
-      {/* Desktop Navigation */}
-      <div className="hidden md:block">
-        <NavItems className="gap-md" />
-      </div>
+      <div className="flex items-center gap-xl">
+        <div className="flex items-center gap-sm">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Progress</span>
+          <div className="h-2 w-32 bg-secondary rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-standard" 
+              style={{ width: `${(passCount / 10) * 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-foreground">{passCount} / 10</span>
+        </div>
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-none">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="bg-background border-l border-border w-72">
-            <SheetHeader className="mb-lg">
-              <SheetTitle className="text-left font-headline uppercase tracking-widest text-primary">
-                Menu
-              </SheetTitle>
-            </SheetHeader>
-            <div className="flex flex-col gap-sm">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "py-sm text-xs font-bold uppercase tracking-[0.2em] border-b border-border/50 flex items-center gap-2",
-                    pathname === link.href ? "text-primary" : "text-muted-foreground",
-                    link.name === "Ship" && "text-green-600"
-                  )}
-                >
-                  {link.name === "Ship" && <CheckCircle2 className="h-3 w-3" />}
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      <div className="hidden md:flex items-center">
-        <div className="h-8 w-[1px] bg-border mx-md" />
-        <div className="flex flex-col items-end">
-          <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground opacity-60">
-            System v1.0
-          </span>
-          <span className={cn(
-            "text-[8px] font-bold uppercase tracking-widest",
-            status === "Shipped" ? "text-green-600" : "text-primary"
-          )}>
-            Status: {status}
-          </span>
+        <div className="flex items-center gap-sm">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</span>
+          <Badge variant={status === "Shipped" ? "secondary" : "outline"} className="rounded-none uppercase tracking-widest text-[9px] px-xs">
+            {status}
+          </Badge>
         </div>
       </div>
     </div>
