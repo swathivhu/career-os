@@ -16,6 +16,7 @@ interface FilterState {
   mode: string;
   experience: string;
   source: string;
+  status: string;
 }
 
 interface JobFilterBarProps {
@@ -44,10 +45,10 @@ export function JobFilterBar({ filters, setFilters }: JobFilterBarProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-sm w-full md:w-auto">
+        <div className="grid grid-cols-3 md:flex gap-sm w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
           <div className="space-y-xs">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Location</label>
-            <Select onValueChange={(v) => updateFilter('location', v)}>
+            <Select value={filters.location || "all"} onValueChange={(v) => updateFilter('location', v)}>
               <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-32 focus:ring-primary">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
@@ -67,8 +68,8 @@ export function JobFilterBar({ filters, setFilters }: JobFilterBarProps) {
 
           <div className="space-y-xs">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Mode</label>
-            <Select onValueChange={(v) => updateFilter('mode', v)}>
-              <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-32 focus:ring-primary">
+            <Select value={filters.mode || "all"} onValueChange={(v) => updateFilter('mode', v)}>
+              <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-28 focus:ring-primary">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
@@ -81,25 +82,25 @@ export function JobFilterBar({ filters, setFilters }: JobFilterBarProps) {
           </div>
 
           <div className="space-y-xs">
-            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Exp</label>
-            <Select onValueChange={(v) => updateFilter('experience', v)}>
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Status</label>
+            <Select value={filters.status || "all"} onValueChange={(v) => updateFilter('status', v)}>
               <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-32 focus:ring-primary">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
-                <SelectItem value="Fresher">Fresher</SelectItem>
-                <SelectItem value="0-1">0-1 Year</SelectItem>
-                <SelectItem value="1-3">1-3 Years</SelectItem>
-                <SelectItem value="3-5">3-5 Years</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="Not Applied">Not Applied</SelectItem>
+                <SelectItem value="Applied">Applied</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="Selected">Selected</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-xs">
+          <div className="space-y-xs hidden md:block">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Source</label>
-            <Select onValueChange={(v) => updateFilter('source', v)}>
-              <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-32 focus:ring-primary">
+            <Select value={filters.source || "all"} onValueChange={(v) => updateFilter('source', v)}>
+              <SelectTrigger className="rounded-none h-11 border-border/60 bg-background/50 w-full md:w-28 focus:ring-primary">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>

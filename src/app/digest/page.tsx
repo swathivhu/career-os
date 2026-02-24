@@ -5,6 +5,7 @@ import { ContextHeader } from "@/components/layout/ContextHeader";
 import { Button } from "@/components/ui/button";
 import { JOBS_DATA, Job } from "@/lib/jobs-data";
 import { useSettings } from "@/hooks/use-settings";
+import { useJobStatus } from "@/hooks/use-job-status";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { 
@@ -15,9 +16,11 @@ import {
   ExternalLink,
   Lock,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Activity
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface ScoredJob extends Job {
   matchScore: number;
@@ -25,10 +28,10 @@ interface ScoredJob extends Job {
 
 export default function DigestPage() {
   const { settings, hasPreferences, isLoaded } = useSettings();
+  const { history } = useJobStatus();
   const [digest, setDigest] = useState<ScoredJob[] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Use useEffect to prevent hydration mismatch for Date
   const [today, setToday] = useState<string | null>(null);
   const [displayDate, setDisplayDate] = useState<string | null>(null);
 
@@ -53,30 +56,21 @@ export default function DigestPage() {
     if (!settings || !digestKey) return;
     setIsGenerating(true);
 
-    // Simulated calculation delay
     setTimeout(() => {
       const scoredJobs: ScoredJob[] = JOBS_DATA.map(job => {
         let score = 0;
-        
-        // Keyword Matching
         const keywords = settings.keywords.toLowerCase().split(",").map(k => k.trim());
         keywords.forEach(kw => {
           if (kw && (job.title.toLowerCase().includes(kw) || job.description.toLowerCase().includes(kw))) {
             score += 30;
           }
         });
-
-        // Location Matching
         if (settings.location.toLowerCase() && job.location.toLowerCase().includes(settings.location.toLowerCase())) {
           score += 20;
         }
-
-        // Mode Matching
         if (job.mode.toLowerCase() === settings.mode.toLowerCase()) {
           score += 20;
         }
-
-        // Experience Level Match
         const expMap: Record<string, string[]> = {
           'fresher': ['Fresher', '0-1'],
           'mid': ['1-3', '3-5'],
@@ -85,12 +79,9 @@ export default function DigestPage() {
         if (expMap[settings.experience]?.includes(job.experience)) {
           score += 30;
         }
-
-        // Cap at 100 for display
         return { ...job, matchScore: Math.min(score, 100) };
       });
 
-      // Sort by score (desc) then days ago (asc - most recent first)
       const topJobs = scoredJobs
         .sort((a, b) => b.matchScore - a.matchScore || a.postedDaysAgo - b.postedDaysAgo)
         .slice(0, 10);
@@ -124,6 +115,15 @@ export default function DigestPage() {
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Applied': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 rounded-none text-[9px] uppercase tracking-tighter">Applied</Badge>;
+      case 'Rejected': return <Badge variant="destructive" className="rounded-none text-[9px] uppercase tracking-tighter">Rejected</Badge>;
+      case 'Selected': return <Badge variant="secondary" className="bg-green-100 text-green-700 rounded-none text-[9px] uppercase tracking-tighter">Selected</Badge>;
+      default: return <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-tighter">Not Applied</Badge>;
+    }
+  };
+
   if (!isLoaded || !today) return null;
 
   return (
@@ -134,134 +134,137 @@ export default function DigestPage() {
         subtitle="Curated professional intelligence manifested daily at 09:00 AM."
       />
 
-      <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-lg">
-        {!hasPreferences ? (
-          <div className="flex flex-col items-center justify-center py-xl space-y-md border border-dashed border-border opacity-60">
-            <Lock className="h-10 w-10 text-muted-foreground" />
-            <div className="text-center space-y-xs">
-              <h2 className="text-2xl font-headline italic text-foreground">Set preferences to generate a personalized digest.</h2>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] max-w-sm mx-auto text-muted-foreground">
-                The engine requires your architectural parameters to curate matching roles.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-none border-primary text-primary hover:bg-primary/5 uppercase tracking-widest font-bold">
-              <a href="/settings">Configure Preferences</a>
-            </Button>
-          </div>
-        ) : !digest ? (
-          <div className="flex flex-col items-center justify-center py-xl space-y-md border border-dashed border-border bg-card/30">
-            <div className="p-lg bg-card rounded-full border border-border/50 shadow-sm">
-              <MailOpen className="h-12 w-12 text-muted-foreground opacity-30" />
-            </div>
-            <div className="text-center space-y-xs">
-              <h2 className="text-2xl font-headline italic">Next Delivery @ 09:00 AM</h2>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-                Your daily automated digest is awaiting initialization.
-              </p>
-            </div>
-            <Button 
-              onClick={generateDigest}
-              disabled={isGenerating}
-              className="rounded-none h-14 px-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-[0.2em] transition-standard"
-            >
-              {isGenerating ? <RefreshCcw className="h-5 w-5 animate-spin mr-2" /> : <Zap className="h-5 w-5 mr-2" />}
-              {isGenerating ? "Synthesizing..." : "Generate Today's 9AM Digest (Simulated)"}
-            </Button>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold italic">
-              Demo Mode: Daily 9AM trigger simulated manually.
-            </p>
-          </div>
-        ) : digest.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-xl space-y-md border border-dashed border-border opacity-60">
-            <AlertCircle className="h-10 w-10 text-primary/40" />
-            <div className="text-center space-y-xs">
-              <h2 className="text-2xl font-headline italic">No matching roles today. Check again tomorrow.</h2>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Your current parameters returned no verified opportunities in the last 24 hours.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-[800px] mx-auto space-y-lg animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-border/30 pb-md gap-md">
-              <div className="space-y-xs">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Locked & Delivered</span>
-                <h2 className="text-3xl font-headline italic">Top 10 Jobs For You — 9AM Digest</h2>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Manifested: {displayDate} @ 09:00 AM
+      <main className="flex-grow w-full max-w-[1400px] mx-auto px-xl py-lg flex flex-col lg:flex-row gap-xl">
+        <div className="flex-grow space-y-lg">
+          {!hasPreferences ? (
+            <div className="flex flex-col items-center justify-center py-xl space-y-md border border-dashed border-border opacity-60">
+              <Lock className="h-10 w-10 text-muted-foreground" />
+              <div className="text-center space-y-xs">
+                <h2 className="text-2xl font-headline italic text-foreground">Set preferences to generate a personalized digest.</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] max-w-sm mx-auto text-muted-foreground">
+                  The engine requires your architectural parameters to curate matching roles.
                 </p>
               </div>
-              <div className="flex gap-xs w-full md:w-auto">
-                <Button variant="outline" size="sm" onClick={copyToClipboard} className="flex-1 md:flex-none rounded-none h-10 border-border hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px]">
-                  <Copy className="h-3.5 w-3.5 mr-2" />
-                  Copy
-                </Button>
-                <Button variant="outline" size="sm" onClick={createEmailDraft} className="flex-1 md:flex-none rounded-none h-10 border-border hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px]">
-                  <Mail className="h-3.5 w-3.5 mr-2" />
-                  Email
-                </Button>
-              </div>
-            </div>
-
-            {/* Email-Style Card Container */}
-            <div className="bg-white border border-border/50 p-lg md:p-xl shadow-sm space-y-lg">
-              <div className="space-y-sm">
-                {digest.map((job, idx) => (
-                  <div key={job.id} className="group border-b border-border/10 last:border-0 pb-md last:pb-0 pt-md first:pt-0">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-md">
-                      <div className="space-y-1 flex-grow">
-                        <div className="flex items-center gap-sm">
-                          <span className="text-xs font-bold text-primary opacity-40 font-code">{String(idx + 1).padStart(2, '0')}</span>
-                          <h3 className="text-xl font-headline group-hover:text-primary transition-standard leading-tight">
-                            {job.title}
-                          </h3>
-                        </div>
-                        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-8">
-                          {job.company} — {job.location} ({job.mode})
-                        </p>
-                        <div className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest ml-8 mt-1">
-                          Experience: {job.experience} years
-                        </div>
-                      </div>
-                      <div className="text-right w-full sm:w-auto flex sm:flex-col justify-between items-center sm:items-end mt-2 sm:mt-0">
-                        <div className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-xs py-1 rounded-sm border border-primary/10">
-                          {job.matchScore}% Match
-                        </div>
-                        <Button asChild variant="link" size="sm" className="h-auto p-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary mt-2">
-                          <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-                            Apply <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="pt-md border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-sm text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span className="opacity-50">Digest ID: JD-{today.replace(/-/g, '')}</span>
-                <span className="italic text-center">This digest was generated based on your preferences.</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center gap-xs pt-md">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] font-bold italic opacity-40">
-                Demo Mode: Daily 9AM trigger simulated manually.
-              </p>
-              <Button 
-                variant="ghost" 
-                onClick={() => {
-                  if (digestKey) localStorage.removeItem(digestKey);
-                  setDigest(null);
-                }}
-                className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary h-auto"
-              >
-                <RefreshCcw className="h-3 w-3 mr-2" />
-                Reset Daily Archive (Dev Mode)
+              <Button asChild variant="outline" className="rounded-none border-primary text-primary hover:bg-primary/5 uppercase tracking-widest font-bold">
+                <a href="/settings">Configure Preferences</a>
               </Button>
             </div>
+          ) : !digest ? (
+            <div className="flex flex-col items-center justify-center py-xl space-y-md border border-dashed border-border bg-card/30">
+              <div className="p-lg bg-card rounded-full border border-border/50 shadow-sm">
+                <MailOpen className="h-12 w-12 text-muted-foreground opacity-30" />
+              </div>
+              <div className="text-center space-y-xs">
+                <h2 className="text-2xl font-headline italic">Next Delivery @ 09:00 AM</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+                  Your daily automated digest is awaiting initialization.
+                </p>
+              </div>
+              <Button 
+                onClick={generateDigest}
+                disabled={isGenerating}
+                className="rounded-none h-14 px-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-[0.2em] transition-standard"
+              >
+                {isGenerating ? <RefreshCcw className="h-5 w-5 animate-spin mr-2" /> : <Zap className="h-5 w-5 mr-2" />}
+                {isGenerating ? "Synthesizing..." : "Generate Today's 9AM Digest (Simulated)"}
+              </Button>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold italic">
+                Demo Mode: Daily 9AM trigger simulated manually.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-lg animate-in fade-in duration-500">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-border/30 pb-md gap-md">
+                <div className="space-y-xs">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Locked & Delivered</span>
+                  <h2 className="text-3xl font-headline italic">Top 10 Jobs For You — 9AM Digest</h2>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Manifested: {displayDate} @ 09:00 AM
+                  </p>
+                </div>
+                <div className="flex gap-xs w-full md:w-auto">
+                  <Button variant="outline" size="sm" onClick={copyToClipboard} className="flex-1 md:flex-none rounded-none h-10 border-border hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px]">
+                    <Copy className="h-3.5 w-3.5 mr-2" />
+                    Copy
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={createEmailDraft} className="flex-1 md:flex-none rounded-none h-10 border-border hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px]">
+                    <Mail className="h-3.5 w-3.5 mr-2" />
+                    Email
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-white border border-border/50 p-lg md:p-xl shadow-sm space-y-lg">
+                <div className="space-y-sm">
+                  {digest.map((job, idx) => (
+                    <div key={job.id} className="group border-b border-border/10 last:border-0 pb-md last:pb-0 pt-md first:pt-0">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-md">
+                        <div className="space-y-1 flex-grow">
+                          <div className="flex items-center gap-sm">
+                            <span className="text-xs font-bold text-primary opacity-40 font-code">{String(idx + 1).padStart(2, '0')}</span>
+                            <h3 className="text-xl font-headline group-hover:text-primary transition-standard leading-tight">
+                              {job.title}
+                            </h3>
+                          </div>
+                          <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-8">
+                            {job.company} — {job.location} ({job.mode})
+                          </p>
+                        </div>
+                        <div className="text-right w-full sm:w-auto flex sm:flex-col justify-between items-center sm:items-end mt-2 sm:mt-0">
+                          <div className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-xs py-1 rounded-sm border border-primary/10">
+                            {job.matchScore}% Match
+                          </div>
+                          <Button asChild variant="link" size="sm" className="h-auto p-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary mt-2">
+                            <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
+                              Apply <ExternalLink className="h-3 w-3 ml-1" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="pt-md border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-sm text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <span className="opacity-50">Digest ID: JD-{today.replace(/-/g, '')}</span>
+                  <span className="italic text-center">This digest was generated based on your preferences.</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <aside className="w-full lg:w-[350px] space-y-lg">
+          <div className="bg-card/50 border border-border/50 p-lg space-y-md sticky top-24">
+            <div className="flex items-center gap-xs pb-xs border-b border-border/30">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-foreground">
+                Status Intelligence
+              </h3>
+            </div>
+            
+            <div className="space-y-sm max-h-[500px] overflow-y-auto pr-xs custom-scrollbar">
+              {history.length > 0 ? (
+                history.map((entry, idx) => (
+                  <div key={`${entry.jobId}-${idx}`} className="space-y-1 border-l-2 border-primary/10 pl-sm py-xs">
+                    <div className="flex justify-between items-start gap-xs">
+                      <p className="text-[11px] font-bold uppercase tracking-tight text-foreground line-clamp-1">{entry.title}</p>
+                      {getStatusBadge(entry.status)}
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">{entry.company}</p>
+                    <p className="text-[9px] italic text-muted-foreground mt-1">
+                      {format(new Date(entry.timestamp), "MMM d, h:mm a")}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-lg opacity-40">
+                  <p className="text-[10px] font-bold uppercase tracking-widest">No status activity logged.</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </aside>
       </main>
     </div>
   );

@@ -10,6 +10,7 @@ import { JobCard } from "@/components/jobs/JobCard";
 import { JobFilterBar } from "@/components/jobs/JobFilterBar";
 import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
 import { useSavedJobs } from "@/hooks/use-saved-jobs";
+import { useJobStatus } from "@/hooks/use-job-status";
 import { Ghost } from "lucide-react";
 
 export default function DashboardPage() {
@@ -19,10 +20,12 @@ export default function DashboardPage() {
     mode: "",
     experience: "",
     source: "",
+    status: "",
   });
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const { savedIds, toggleSave } = useSavedJobs();
+  const { statuses, isLoaded: statusesLoaded } = useJobStatus();
 
   const filteredJobs = useMemo(() => {
     return JOBS_DATA.filter(job => {
@@ -35,10 +38,13 @@ export default function DashboardPage() {
       const matchesMode = !filters.mode || job.mode === filters.mode;
       const matchesExp = !filters.experience || job.experience === filters.experience;
       const matchesSource = !filters.source || job.source === filters.source;
+      
+      const currentStatus = statuses[job.id] || 'Not Applied';
+      const matchesStatus = !filters.status || currentStatus === filters.status;
 
-      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource;
+      return matchesSearch && matchesLocation && matchesMode && matchesExp && matchesSource && matchesStatus;
     }).sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
-  }, [filters]);
+  }, [filters, statuses]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-xl">
