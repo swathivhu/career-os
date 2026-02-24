@@ -1,187 +1,164 @@
 /**
- * @fileOverview Heuristic analysis engine for Job Descriptions.
- * Detects skills, calculates scores, and generates tailored prep content.
+ * @fileOverview Hardened heuristic analysis engine for Job Descriptions.
+ * Standardizes schema and handles edge cases for skill extraction.
  */
 
-export interface Round {
-  name: string;
-  focus: string;
-  explanation: string;
+export interface AnalysisRound {
+  roundTitle: string;
+  focusAreas: string[];
+  whyItMatters: string;
 }
 
-export interface CompanyIntel {
-  size: 'Startup' | 'Mid-size' | 'Enterprise';
-  industry: string;
-  hiringFocus: string;
+export interface AnalysisChecklist {
+  roundTitle: string;
+  items: string[];
+}
+
+export interface DayPlan {
+  day: number;
+  focus: string;
+  tasks: string[];
+}
+
+export interface ExtractedSkills {
+  coreCS: string[];
+  languages: string[];
+  web: string[];
+  data: string[];
+  cloud: string[];
+  testing: string[];
+  other: string[];
 }
 
 export interface AnalysisResult {
   id: string;
   createdAt: string;
+  updatedAt: string;
   company: string;
   role: string;
   jdText: string;
-  extractedSkills: Record<string, string[]>;
-  plan: string[];
-  checklist: { round: string; items: string[] }[];
-  questions: { skill: string; question: string }[];
-  readinessScore: number;
-  skillConfidenceMap?: Record<string, 'know' | 'practice'>;
-  companyIntel: CompanyIntel;
-  roundMapping: Round[];
+  extractedSkills: ExtractedSkills;
+  roundMapping: AnalysisRound[];
+  checklist: AnalysisChecklist[];
+  plan7Days: DayPlan[];
+  questions: string[];
+  baseScore: number;
+  finalScore: number;
+  skillConfidenceMap: Record<string, "know" | "practice">;
 }
 
-const SKILL_CATEGORIES: Record<string, string[]> = {
-  'Core CS': ['DSA', 'OOP', 'DBMS', 'OS', 'Networks', 'Data Structures', 'Algorithms'],
-  'Languages': ['Java', 'Python', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#', 'Go', 'Rust'],
-  'Web': ['React', 'Next.js', 'Node.js', 'Express', 'REST', 'GraphQL', 'Angular', 'Vue', 'HTML', 'CSS'],
-  'Data': ['SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Firebase', 'Oracle'],
-  'Cloud/DevOps': ['AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'CI/CD', 'Linux', 'Terraform'],
-  'Testing': ['Selenium', 'Cypress', 'Playwright', 'JUnit', 'PyTest', 'Mocha', 'Chai']
+const SKILL_MAP: Record<string, string[]> = {
+  coreCS: ['DSA', 'OOP', 'DBMS', 'OS', 'Networks', 'Data Structures', 'Algorithms'],
+  languages: ['Java', 'Python', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#', 'Go', 'Rust'],
+  web: ['React', 'Next.js', 'Node.js', 'Express', 'REST', 'GraphQL', 'Angular', 'Vue', 'HTML', 'CSS'],
+  data: ['SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Firebase', 'Oracle'],
+  cloud: ['AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'CI/CD', 'Linux', 'Terraform'],
+  testing: ['Selenium', 'Cypress', 'Playwright', 'JUnit', 'PyTest', 'Mocha', 'Chai']
 };
 
-const ENTERPRISE_LIST = [
-  'Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'TCS', 'Infosys', 'Wipro', 'Accenture', 
-  'IBM', 'Oracle', 'SAP', 'Dell', 'Capgemini', 'Cognizant', 'HCL', 'Goldman Sachs', 'Morgan Stanley'
-];
-
 export function analyzeJobDescription(company: string, role: string, jdText: string): AnalysisResult {
-  const detected: Record<string, string[]> = {};
   const lowerJD = jdText.toLowerCase();
+  const extracted: ExtractedSkills = {
+    coreCS: [],
+    languages: [],
+    web: [],
+    data: [],
+    cloud: [],
+    testing: [],
+    other: []
+  };
+
   let categoriesFound = 0;
 
   // 1. Extract Skills
-  Object.entries(SKILL_CATEGORIES).forEach(([category, skills]) => {
+  Object.entries(SKILL_MAP).forEach(([key, skills]) => {
     const found = skills.filter(skill => {
-      // Escape special regex characters (like +, #, .) in the skill name to avoid SyntaxErrors
       const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Create a regex that matches the skill as a standalone word
-      // \b ensures boundary at start. (?!\w) ensures the skill isn't followed by other word characters (e.g., Java vs JavaScript)
       const regex = new RegExp(`\\b${escapedSkill}(?!\\w)`, 'i');
       return regex.test(lowerJD);
     });
     if (found.length > 0) {
-      detected[category] = found;
+      (extracted as any)[key] = found;
       categoriesFound++;
     }
   });
 
-  const hasSkills = Object.keys(detected).length > 0;
-  if (!hasSkills) {
-    detected['General'] = ['General fresher stack'];
+  // 2. Default behavior if no skills detected
+  const totalSkills = Object.values(extracted).flat().length;
+  if (totalSkills === 0) {
+    extracted.other = ["Communication", "Problem solving", "Basic coding", "Projects"];
   }
 
-  // 2. Company Intel Heuristics
-  const isEnterprise = ENTERPRISE_LIST.some(e => company.toLowerCase().includes(e.toLowerCase()));
-  const intel: CompanyIntel = {
-    size: isEnterprise ? 'Enterprise' : 'Startup',
-    industry: 'Technology Services',
-    hiringFocus: isEnterprise 
-      ? 'Structured DSA, Core CS fundamentals, and process adherence.' 
-      : 'Practical problem solving, tech stack depth, and individual ownership.'
-  };
+  // 3. Rounds & Mapping
+  const isEnterprise = ['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'TCS', 'Infosys', 'Wipro', 'Accenture'].some(e => 
+    company.toLowerCase().includes(e.toLowerCase())
+  );
 
-  // 3. Dynamic Round Mapping
-  const rounds: Round[] = [];
-  if (intel.size === 'Enterprise') {
-    rounds.push({ 
-      name: 'Round 1: Online Assessment', 
-      focus: 'Aptitude & Basic DSA', 
-      explanation: 'Used to filter candidates based on logical speed and basic coding ability.' 
-    });
-    rounds.push({ 
-      name: 'Round 2: Technical Interview I', 
-      focus: 'Data Structures & Core CS', 
-      explanation: 'Deep dive into memory management, OS fundamentals, and complex DSA problems.' 
-    });
-    rounds.push({ 
-      name: 'Round 3: Technical Interview II', 
-      focus: 'Projects & Advanced Topics', 
-      explanation: 'Exploration of your past work and how you apply core concepts to real scenarios.' 
-    });
-    rounds.push({ 
-      name: 'Round 4: HR / Behavioral', 
-      focus: 'Culture & Communication', 
-      explanation: 'Ensuring alignment with company values and assessing long-term growth potential.' 
-    });
-  } else {
-    rounds.push({ 
-      name: 'Round 1: Practical Coding Task', 
-      focus: 'Stack Proficiency', 
-      explanation: 'Often a take-home or live coding session focusing on building a functional feature.' 
-    });
-    rounds.push({ 
-      name: 'Round 2: Technical Discussion', 
-      focus: 'System Architecture', 
-      explanation: 'Discussing tradeoffs, scalability, and how you choose tools for specific problems.' 
-    });
-    rounds.push({ 
-      name: 'Round 3: Culture & Founder Fit', 
-      focus: 'Impact & Agility', 
-      explanation: 'Focuses on your ability to work in fast-paced environments and take ownership.' 
-    });
-  }
-
-  // 4. Readiness Score
-  let score = 35;
-  score += Math.min(categoriesFound * 5, 30);
-  if (company.trim()) score += 10;
-  if (role.trim()) score += 10;
-  if (jdText.length > 800) score += 10;
-  score = Math.min(score, 100);
-
-  // 5. Checklist (Simplified mapping)
-  const checklist = rounds.map(r => ({
-    round: r.name,
-    items: [r.focus, 'Standard behavioral prep', 'Company research']
-  }));
-
-  // 6. 7-Day Plan
-  const plan = [
-    'Day 1-2: Basics of Core CS (OS, Networks) and mental math.',
-    'Day 3-4: DSA intensive. Practice 5-10 LeetCode Mediums.',
-    lowerJD.includes('react') || lowerJD.includes('frontend') 
-      ? 'Day 5: Frontend deep dive (DOM, State, Lifecycle) and Resume projects.'
-      : 'Day 5: Backend & System Design (Scaling, Load Balancing) and Resume projects.',
-    'Day 6: Mock interview practice with behavioral questions.',
-    'Day 7: Final revision of weak topics and company values research.'
+  const roundMapping: AnalysisRound[] = isEnterprise ? [
+    { roundTitle: 'Round 1: Online Assessment', focusAreas: ['Aptitude', 'Basic DSA'], whyItMatters: 'Filters for logical speed.' },
+    { roundTitle: 'Round 2: Technical I', focusAreas: ['Core CS', 'Complex DSA'], whyItMatters: 'Tests fundamental depth.' },
+    { roundTitle: 'Round 3: Technical II', focusAreas: ['Projects', 'System Design'], whyItMatters: 'Tests application skills.' },
+    { roundTitle: 'Round 4: Behavioral', focusAreas: ['Culture', 'Communication'], whyItMatters: 'Ensures long-term fit.' }
+  ] : [
+    { roundTitle: 'Round 1: Coding Task', focusAreas: ['Practical Stack', 'Feature Build'], whyItMatters: 'Tests execution speed.' },
+    { roundTitle: 'Round 2: Technical Discussion', focusAreas: ['Architecture', 'Tradeoffs'], whyItMatters: 'Tests decision making.' },
+    { roundTitle: 'Round 3: Founder Fit', focusAreas: ['Impact', 'Agility'], whyItMatters: 'Ensures startup alignment.' }
   ];
 
-  // 7. Questions
-  const questions: { skill: string; question: string }[] = [];
-  Object.entries(detected).forEach(([cat, skills]) => {
-    skills.forEach(skill => {
-      if (questions.length < 10) {
-        if (cat === 'Data') questions.push({ skill, question: `Explain indexing in ${skill} and how it impacts query performance.` });
-        else if (cat === 'Web') questions.push({ skill, question: `How does state management differ in ${skill} compared to traditional paradigms?` });
-        else if (cat === 'Languages') questions.push({ skill, question: `Explain memory management and concurrency in ${skill}.` });
-        else questions.push({ skill, question: `What are the core design patterns used when working with ${skill}?` });
-      }
-    });
-  });
+  // 4. Score Calculation
+  let baseScore = 35;
+  baseScore += Math.min(categoriesFound * 5, 30);
+  if (company.trim()) baseScore += 10;
+  if (role.trim()) baseScore += 10;
+  if (jdText.length > 800) baseScore += 10;
+  baseScore = Math.min(baseScore, 100);
 
-  if (questions.length < 10) {
-    questions.push({ skill: 'General', question: 'Explain one challenging project you have worked on in detail.' });
+  // 5. Questions Generation
+  const questions: string[] = [];
+  const allSkills = Object.values(extracted).flat();
+  allSkills.forEach(skill => {
+    if (questions.length < 10) {
+      if (extracted.data.includes(skill)) questions.push(`Explain indexing in ${skill} and performance impacts.`);
+      else if (extracted.web.includes(skill)) questions.push(`How do you handle state or lifecycle in ${skill}?`);
+      else if (extracted.languages.includes(skill)) questions.push(`Explain concurrency or memory management in ${skill}.`);
+      else questions.push(`Describe a specific challenge you solved using ${skill}.`);
+    }
+  });
+  while (questions.length < 10) {
+    questions.push("Explain your most significant technical project and your specific contribution.");
   }
 
-  const skillConfidenceMap: Record<string, 'know' | 'practice'> = {};
-  Object.values(detected).flat().forEach(skill => {
-    skillConfidenceMap[skill] = 'practice';
+  // 6. 7-Day Plan
+  const isWeb = extracted.web.length > 0;
+  const plan7Days: DayPlan[] = [
+    { day: 1, focus: 'Fundamentals', tasks: ['Review OS & DBMS', 'Brush up mental aptitude'] },
+    { day: 2, focus: 'DSA Core', tasks: ['Practice 5 Medium Arrays/Strings problems', 'Time complexity analysis'] },
+    { day: 3, focus: 'DSA Advanced', tasks: ['Practice 3 Linked List/Tree problems', 'Recursion practice'] },
+    { day: 4, focus: 'Tech Stack', tasks: isWeb ? ['Frontend deep dive (DOM/State)', 'API integration practice'] : ['Backend systems (Scaling/Caching)', 'Database optimization'] },
+    { day: 5, focus: 'Resume & Projects', tasks: ['Project walkthrough preparation', 'Quantifying impact in bullets'] },
+    { day: 6, focus: 'Mock Drills', tasks: ['Behavioral STAR method practice', 'Live coding simulation'] },
+    { day: 7, focus: 'Final Push', tasks: ['Review company values', 'Address remaining weak areas'] }
+  ];
+
+  const skillConfidenceMap: Record<string, "know" | "practice"> = {};
+  allSkills.forEach(skill => {
+    skillConfidenceMap[skill] = "practice";
   });
 
   return {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     company,
     role,
     jdText,
-    extractedSkills: detected,
-    plan,
-    checklist,
-    questions: questions.slice(0, 10),
-    readinessScore: score,
-    skillConfidenceMap,
-    companyIntel: intel,
-    roundMapping: rounds
+    extractedSkills: extracted,
+    roundMapping,
+    checklist: roundMapping.map(r => ({ roundTitle: r.roundTitle, items: [...r.focusAreas, 'Behavioral prep'] })),
+    plan7Days,
+    questions,
+    baseScore,
+    finalScore: baseScore, // Initially matches base score as all are 'practice'
+    skillConfidenceMap
   };
 }
