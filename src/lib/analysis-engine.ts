@@ -53,7 +53,11 @@ export function analyzeJobDescription(company: string, role: string, jdText: str
   // 1. Extract Skills
   Object.entries(SKILL_CATEGORIES).forEach(([category, skills]) => {
     const found = skills.filter(skill => {
-      const regex = new RegExp(`\\b${skill.toLowerCase().replace('.', '\\.')}\\b`, 'i');
+      // Escape special regex characters (like +, #, .) in the skill name to avoid SyntaxErrors
+      const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Create a regex that matches the skill as a standalone word
+      // \b ensures boundary at start. (?!\w) ensures the skill isn't followed by other word characters (e.g., Java vs JavaScript)
+      const regex = new RegExp(`\\b${escapedSkill}(?!\\w)`, 'i');
       return regex.test(lowerJD);
     });
     if (found.length > 0) {
