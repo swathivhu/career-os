@@ -6,7 +6,7 @@ A strategic professional infrastructure system designed to manage placement read
 
 ## 🚀 Live System Overview
 
-Career OS includes:
+Career OS includes: career-os-kappa.vercel.app
 
 ### 1️⃣ Placement Readiness Platform
 - JD-based skill extraction
