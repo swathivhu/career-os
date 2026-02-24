@@ -8,17 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, 
   Trash2, 
   Zap, 
   RotateCcw, 
-  ChevronRight, 
   Target, 
   Sparkles,
-  Info
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -49,6 +50,22 @@ export default function BuilderPage() {
     updateData({ ...data, [category]: updated });
   };
 
+  const ACTION_VERBS = ['Built', 'Developed', 'Designed', 'Implemented', 'Led', 'Improved', 'Created', 'Optimized', 'Automated'];
+  const NUMERIC_REGEX = /[0-9%kKxX+]/;
+
+  const getBulletGuidance = (text: string) => {
+    const firstWord = text.trim().split(/\s+/)[0];
+    const hasVerb = ACTION_VERBS.some(v => v.toLowerCase() === firstWord?.toLowerCase());
+    const hasNumbers = NUMERIC_REGEX.test(text);
+    
+    const issues = [];
+    if (text.length > 0) {
+      if (!hasVerb) issues.push("Start with a strong action verb.");
+      if (!hasNumbers) issues.push("Add measurable impact (numbers).");
+    }
+    return issues;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F7F6F3] text-[#111111] font-body">
       {/* Navigation */}
@@ -74,18 +91,18 @@ export default function BuilderPage() {
           </header>
 
           <div className="flex gap-md pb-md border-b border-[#111111]/5">
-            <Button onClick={loadSampleData} variant="outline" className="rounded-none border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest">
+            <Button onClick={loadSampleData} variant="outline" className="rounded-none border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest h-10 px-4">
               <Zap className="h-3 w-3 mr-2 text-[#8B0000]" />
               Load Sample Data
             </Button>
-            <Button onClick={resetData} variant="ghost" className="rounded-none text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100">
+            <Button onClick={resetData} variant="ghost" className="rounded-none text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 h-10 px-4">
               <RotateCcw className="h-3 w-3 mr-2" />
               Reset Manifest
             </Button>
           </div>
 
           {/* Sections */}
-          <section className="space-y-xl">
+          <section className="space-y-xl pb-xl">
             {/* Personal Info */}
             <div className="space-y-md">
               <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">01. Personal Identity</h3>
@@ -118,7 +135,12 @@ export default function BuilderPage() {
                 className="min-h-[140px] rounded-none border-[#111111]/10 p-md italic leading-relaxed text-sm" 
                 placeholder="A high-stakes professional overview of your career and unique value proposition..."
               />
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 italic">Word count: {data.summary.trim().split(/\s+/).filter(Boolean).length} (Target: 40-120)</p>
+              <div className="flex justify-between items-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 italic">Word count: {data.summary.trim().split(/\s+/).filter(Boolean).length} (Target: 40-120)</p>
+                {data.summary.length > 0 && data.summary.trim().split(/\s+/).filter(Boolean).length < 40 && (
+                  <span className="text-[9px] font-bold uppercase text-[#8B0000] italic">Too brief for maximum impact.</span>
+                )}
+              </div>
             </div>
 
             {/* Experience */}
@@ -130,30 +152,43 @@ export default function BuilderPage() {
                 </Button>
               </div>
               <div className="space-y-md">
-                {data.experience.map((exp, idx) => (
-                  <Card key={idx} className="rounded-none border-[#111111]/5 bg-white/30 p-md relative group">
-                    <Button onClick={() => removeItem('experience', idx)} variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-[#8B0000] hover:bg-transparent">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                    <div className="grid grid-cols-2 gap-md mb-md">
-                      <Input value={exp.company} onChange={(e) => {
+                {data.experience.map((exp, idx) => {
+                  const guidance = getBulletGuidance(exp.description);
+                  return (
+                    <Card key={idx} className="rounded-none border-[#111111]/5 bg-white/30 p-md relative group">
+                      <Button onClick={() => removeItem('experience', idx)} variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-[#8B0000] hover:bg-transparent">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                      <div className="grid grid-cols-2 gap-md mb-md">
+                        <Input value={exp.company} onChange={(e) => {
+                          const next = [...data.experience];
+                          next[idx].company = e.target.value;
+                          updateData({ ...data, experience: next });
+                        }} placeholder="Company" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
+                        <Input value={exp.role} onChange={(e) => {
+                          const next = [...data.experience];
+                          next[idx].role = e.target.value;
+                          updateData({ ...data, experience: next });
+                        }} placeholder="Role" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
+                      </div>
+                      <Textarea value={exp.description} onChange={(e) => {
                         const next = [...data.experience];
-                        next[idx].company = e.target.value;
+                        next[idx].description = e.target.value;
                         updateData({ ...data, experience: next });
-                      }} placeholder="Company" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
-                      <Input value={exp.role} onChange={(e) => {
-                        const next = [...data.experience];
-                        next[idx].role = e.target.value;
-                        updateData({ ...data, experience: next });
-                      }} placeholder="Role" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
-                    </div>
-                    <Textarea value={exp.description} onChange={(e) => {
-                      const next = [...data.experience];
-                      next[idx].description = e.target.value;
-                      updateData({ ...data, experience: next });
-                    }} placeholder="Describe your structural impact and measurable achievements..." className="min-h-[100px] rounded-none border-transparent bg-transparent p-0 italic text-sm" />
-                  </Card>
-                ))}
+                      }} placeholder="Describe your structural impact and measurable achievements..." className="min-h-[100px] rounded-none border-transparent bg-transparent p-0 italic text-sm" />
+                      
+                      {guidance.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {guidance.map((g, i) => (
+                            <p key={i} className="text-[9px] font-bold uppercase tracking-widest text-[#8B0000]/60 italic flex items-center gap-1">
+                              <AlertCircle className="h-2 w-2" /> {g}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
               </div>
             </div>
 
@@ -240,21 +275,39 @@ export default function BuilderPage() {
             )}
           </div>
 
-          <header className="flex justify-between items-center mb-md border-b border-white/10 pb-md">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Real-time Manifest</span>
-            <Button asChild variant="outline" size="sm" className="rounded-none border-white/20 text-white text-[9px] font-bold uppercase tracking-widest hover:bg-white/5">
-              <Link href="/preview">Full Preview</Link>
-            </Button>
+          <header className="flex flex-col space-y-md mb-md border-b border-white/10 pb-md">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Real-time Manifest</span>
+              <Button asChild variant="outline" size="sm" className="rounded-none border-white/20 text-white text-[9px] font-bold uppercase tracking-widest hover:bg-white/5 h-8">
+                <Link href="/preview">Full Preview</Link>
+              </Button>
+            </div>
+            
+            <Tabs 
+              value={data.template} 
+              onValueChange={(v) => updateData({ ...data, template: v as any })}
+              className="w-full"
+            >
+              <TabsList className="bg-white/5 border border-white/10 w-full rounded-none h-10 p-0">
+                <TabsTrigger value="classic" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Classic</TabsTrigger>
+                <TabsTrigger value="modern" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Modern</TabsTrigger>
+                <TabsTrigger value="minimal" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Minimal</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </header>
 
           <div className="flex-grow overflow-y-auto bg-white p-lg shadow-2xl space-y-md font-body text-[10px] leading-relaxed select-none pointer-events-none origin-top scale-95 lg:scale-100">
             {/* Live Resume Rendering */}
-            <div className="text-center space-y-1 pb-md border-b-2 border-[#111111]">
-              <h1 className="text-xl font-headline italic tracking-tight uppercase leading-none">{data.personalInfo.name || 'Your Name'}</h1>
-              <div className="flex justify-center gap-2 uppercase tracking-widest opacity-60 flex-wrap">
-                {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
-                {data.personalInfo.phone && <span>• {data.personalInfo.phone}</span>}
-                {data.personalInfo.location && <span>• {data.personalInfo.location}</span>}
+            <div className={`space-y-md ${data.template === 'minimal' ? 'text-left' : 'text-center'}`}>
+              <div className={`pb-md border-b-2 border-[#111111] ${data.template === 'modern' ? 'flex justify-between items-end text-left' : 'space-y-1'}`}>
+                <h1 className={`${data.template === 'modern' ? 'text-2xl' : 'text-xl'} font-headline italic tracking-tight uppercase leading-none`}>
+                  {data.personalInfo.name || 'Your Name'}
+                </h1>
+                <div className={`flex ${data.template === 'modern' ? 'flex-col items-end text-[8px]' : 'justify-center gap-2'} uppercase tracking-widest opacity-60 flex-wrap`}>
+                  {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
+                  {data.personalInfo.phone && <span>{data.template === 'modern' ? '' : '•'} {data.personalInfo.phone}</span>}
+                  {data.personalInfo.location && <span>{data.template === 'modern' ? '' : '•'} {data.personalInfo.location}</span>}
+                </div>
               </div>
             </div>
 

@@ -22,6 +22,8 @@ export interface Project {
   link: string;
 }
 
+export type ResumeTemplate = 'classic' | 'modern' | 'minimal';
+
 export interface ResumeData {
   personalInfo: {
     name: string;
@@ -38,6 +40,7 @@ export interface ResumeData {
     github: string;
     linkedin: string;
   };
+  template: ResumeTemplate;
 }
 
 const STORAGE_KEY = 'resumeBuilderData';
@@ -49,7 +52,8 @@ const DEFAULT_DATA: ResumeData = {
   experience: [],
   projects: [],
   skills: '',
-  links: { github: '', linkedin: '' }
+  links: { github: '', linkedin: '' },
+  template: 'classic'
 };
 
 const SAMPLE_DATA: ResumeData = {
@@ -68,15 +72,16 @@ const SAMPLE_DATA: ResumeData = {
       company: 'KodNest Systems',
       role: 'Lead Architect',
       duration: '2020 - Present',
-      description: 'Spearheaded the development of the Premium Build System, reducing deployment friction by 45%. Optimized 50+ microservices for 2x performance gains.'
+      description: 'Developed the Premium Build System, reducing deployment friction by 45%. Optimized 50+ microservices for 2x performance gains.'
     }
   ],
   projects: [
-    { title: 'Deterministic UI Framework', description: 'A layout engine focused on 8px grid perfection used by 10k+ developers.', link: 'github.com/kodnest/ui' },
+    { title: 'Deterministic UI Framework', description: 'Implemented a layout engine focused on 8px grid perfection used by 10k+ developers.', link: 'github.com/kodnest/ui' },
     { title: 'SaaS Manifest Engine', description: 'Built an AI-driven schema generator that reduced onboarding time by 60%.', link: 'github.com/kodnest/manifest' }
   ],
   skills: 'React, Next.js, TypeScript, Rust, Distributed Systems, UI/UX Design, Docker, AWS, CI/CD',
-  links: { github: 'github.com/jdoe', linkedin: 'linkedin.com/in/jdoe' }
+  links: { github: 'github.com/jdoe', linkedin: 'linkedin.com/in/jdoe' },
+  template: 'modern'
 };
 
 export function useResumeData() {
