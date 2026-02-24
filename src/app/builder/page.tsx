@@ -19,14 +19,12 @@ import {
   Target, 
   Sparkles,
   AlertCircle,
-  CheckCircle2,
   X,
-  Github,
-  ExternalLink,
-  ChevronDown,
   Layout,
   Palette,
-  Check
+  Check,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +49,7 @@ export default function BuilderPage() {
   const { data, updateData, loadSampleData, resetData, isLoaded } = useResumeData();
   const [skillInputs, setSkillInputs] = useState({ technical: '', soft: '', tools: '' });
 
-  const { score, suggestions } = useMemo(() => calculateATSScore(data), [data]);
+  const { score, suggestions, status, color } = useMemo(() => calculateATSScore(data), [data]);
 
   if (!isLoaded) return null;
 
@@ -103,16 +101,15 @@ export default function BuilderPage() {
   };
 
   const suggestSkills = () => {
-    setTimeout(() => {
-      updateData({
-        ...data,
-        skills: {
-          technical: Array.from(new Set([...data.skills.technical, "TypeScript", "React", "Node.js", "PostgreSQL", "GraphQL"])),
-          soft: Array.from(new Set([...data.skills.soft, "Team Leadership", "Problem Solving"])),
-          tools: Array.from(new Set([...data.skills.tools, "Git", "Docker", "AWS"]))
-        }
-      });
-    }, 1000);
+    updateData({
+      ...data,
+      skills: {
+        technical: Array.from(new Set([...data.skills.technical, "TypeScript", "React", "Node.js", "PostgreSQL", "GraphQL"])),
+        soft: Array.from(new Set([...data.skills.soft, "Team Leadership", "Problem Solving"])),
+        tools: Array.from(new Set([...data.skills.tools, "Git", "Docker", "AWS"]))
+      }
+    });
+    toast({ title: "Skills Manifested", description: "Strategic keywords added to your domain." });
   };
 
   const ACTION_VERBS = ['Built', 'Developed', 'Designed', 'Implemented', 'Led', 'Improved', 'Created', 'Optimized', 'Automated'];
@@ -150,7 +147,7 @@ export default function BuilderPage() {
   const handleDownload = () => {
     toast({
       title: "Export Initiated",
-      description: "PDF export ready! Check your downloads.",
+      description: "PDF generation triggered. Redirecting to preview...",
     });
   };
 
@@ -426,7 +423,6 @@ export default function BuilderPage() {
                       data.template === t ? "border-primary" : "border-white/10 opacity-60 hover:opacity-100"
                     )}
                   >
-                    {/* Visual Sketch of Template */}
                     <div className="p-2 h-full flex flex-col gap-1 overflow-hidden">
                       <div className="h-2 w-3/4 bg-gray-200 rounded-sm" />
                       <div className="h-1 w-full bg-gray-100 rounded-sm" />
@@ -476,28 +472,32 @@ export default function BuilderPage() {
           <div className="mb-xl space-y-md border-t border-white/10 pt-md">
             <div className="flex justify-between items-end mb-xs">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">ATS Readiness Index</span>
-              <span className={`text-2xl font-headline italic ${score >= 80 ? 'text-green-400' : 'text-white'}`}>{score}%</span>
+              <span className={`text-2xl font-headline italic ${color}`}>{score}%</span>
             </div>
-            <Progress value={score} className="h-1 bg-white/10 rounded-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+            <Progress value={score} className="h-1 bg-white/10 rounded-none">
               <div className="h-full transition-all" style={{ width: `${score}%`, backgroundColor: data.colorTheme }} />
             </Progress>
             
-            <div className="flex gap-md pt-2">
-              <Button onClick={handleDownload} className="flex-1 rounded-none text-[10px] font-bold uppercase tracking-widest h-10" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
-                <Target className="h-3 w-3 mr-2" />
-                Download PDF
+            <div className="flex flex-col gap-2 py-2">
+              <div className="flex items-center gap-2">
+                <Target className="h-3 w-3 text-primary" />
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>{status}</span>
+              </div>
+              <Button onClick={() => window.location.href = '/preview'} className="w-full rounded-none text-[10px] font-bold uppercase tracking-widest h-10" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
+                <ChevronRight className="h-3 w-3 mr-2" />
+                Finalize Manifest
               </Button>
             </div>
 
             {suggestions.length > 0 && (
               <div className="mt-md p-md bg-white/5 border border-white/10 space-y-sm">
-                <div className="flex items-center gap-2" style={{ color: data.colorTheme }}>
-                  <Sparkles className="h-3 w-3" />
+                <div className="flex items-center gap-2 text-white/60">
+                  <Info className="h-3 w-3" />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Structural Optimization</span>
                 </div>
                 {suggestions.map((s, i) => (
                   <div key={i} className="flex gap-2 text-[11px] text-white/70 leading-relaxed italic">
-                    <Target className="h-3 w-3 mt-0.5 shrink-0" />
+                    <Check className="h-3 w-3 mt-0.5 shrink-0 text-primary/60" />
                     <span>{s}</span>
                   </div>
                 ))}
@@ -536,7 +536,7 @@ export default function BuilderPage() {
                    {data.summary && (
                     <div className="space-y-1">
                       <h4 className="font-bold uppercase tracking-[0.3em] border-b border-[#111111]/10 pb-0.5" style={{ color: data.colorTheme }}>Summary</h4>
-                      <p className="italic font-medium">{data.summary}</p>
+                      <p className="italic font-medium line-clamp-3">{data.summary}</p>
                     </div>
                   )}
                   {data.experience.length > 0 && (

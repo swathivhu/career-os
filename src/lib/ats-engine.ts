@@ -7,86 +7,61 @@ import { ResumeData } from '@/hooks/use-resume-data';
 
 export interface ATSResult {
   score: number;
+  status: string;
+  color: string;
   suggestions: string[];
 }
+
+const ACTION_VERBS = ['built', 'led', 'designed', 'improved', 'developed', 'implemented', 'created', 'optimized', 'automated', 'managed', 'engineered'];
 
 export function calculateATSScore(data: ResumeData): ATSResult {
   let score = 0;
   const suggestions: string[] = [];
 
-  // 1. Summary Length (40-120 words)
-  const summaryWords = data.summary.trim().split(/\s+/).filter(w => w.length > 0).length;
-  if (summaryWords >= 40 && summaryWords <= 120) {
-    score += 15;
-  } else if (data.summary.length > 0) {
-    suggestions.push("Write a stronger summary (target 40–120 words).");
-  } else {
-    suggestions.push("Add a professional summary.");
-  }
+  // Identity Checks
+  if (data.personalInfo.name) score += 10; else suggestions.push("Add your full name (+10)");
+  if (data.personalInfo.email) score += 10; else suggestions.push("Add an email address (+10)");
+  if (data.personalInfo.phone) score += 5; else suggestions.push("Add a phone number (+5)");
+  
+  // Content Depth
+  if (data.summary.length > 50) score += 10; else suggestions.push("Write a longer summary (> 50 chars) (+10)");
+  
+  const hasActionVerb = ACTION_VERBS.some(verb => data.summary.toLowerCase().includes(verb));
+  if (hasActionVerb) score += 10; else suggestions.push("Use action verbs (e.g., 'Led', 'Built') in summary (+10)");
 
-  // 2. Projects (at least 2)
-  if (data.projects.length >= 2) {
-    score += 10;
-  } else {
-    suggestions.push("Add at least 2 technical projects.");
-  }
-
-  // 3. Experience (at least 1)
-  if (data.experience.length >= 1) {
-    score += 10;
-  } else {
-    suggestions.push("Add at least one professional experience entry.");
-  }
-
-  // 4. Skills (>= 8 items)
-  const skillsList = [
-    ...data.skills.technical,
-    ...data.skills.soft,
-    ...data.skills.tools
-  ];
-  if (skillsList.length >= 8) {
-    score += 10;
-  } else {
-    suggestions.push("Add more skills (target 8+ keywords).");
-  }
-
-  // 5. Links (GitHub or LinkedIn)
-  if (data.links.github || data.links.linkedin) {
-    score += 10;
-  } else {
-    suggestions.push("Include GitHub or LinkedIn links for verification.");
-  }
-
-  // 6. Measurable Impact (Numbers in bullets)
-  const numberRegex = /[0-9%kKxX+]/;
-  const hasImpact = [...data.experience, ...data.projects].some(item => 
-    numberRegex.test(item.description)
-  );
-  if (hasImpact) {
+  // Professional History
+  if (data.experience.length > 0 && data.experience.some(e => e.description.length > 20)) {
     score += 15;
   } else {
-    suggestions.push("Add measurable impact (numbers, %, metrics) to your bullets.");
+    suggestions.push("Add detailed experience with bullet points (+15)");
   }
 
-  // 7. Complete Education
-  const hasEducation = data.education.length > 0 && data.education.every(edu => 
-    edu.institution && edu.degree && edu.year
-  );
-  if (hasEducation) {
-    score += 10;
-  } else if (data.education.length === 0) {
-    suggestions.push("Add your academic background.");
+  // Academic & Projects
+  if (data.education.length > 0) score += 10; else suggestions.push("Add your education details (+10)");
+  if (data.projects.length > 0) score += 10; else suggestions.push("Add at least one project (+10)");
+
+  // Skills & Links
+  const totalSkills = (data.skills.technical?.length || 0) + (data.skills.soft?.length || 0) + (data.skills.tools?.length || 0);
+  if (totalSkills >= 5) score += 10; else suggestions.push("Add at least 5 skills (+10)");
+
+  if (data.links.linkedin) score += 5; else suggestions.push("Add a LinkedIn profile (+5)");
+  if (data.links.github) score += 5; else suggestions.push("Add a GitHub profile (+5)");
+
+  score = Math.min(100, score);
+
+  let status = "Needs Work";
+  let color = "text-red-500";
+  let hsvColor = "hsl(0, 84%, 60%)";
+
+  if (score > 40 && score <= 70) {
+    status = "Getting There";
+    color = "text-amber-500";
+    hsvColor = "hsl(38, 92%, 50%)";
+  } else if (score > 70) {
+    status = "Strong Resume";
+    color = "text-green-500";
+    hsvColor = "hsl(142, 76%, 36%)";
   }
 
-  // 8. Personal Identity Check
-  if (data.personalInfo.name && data.personalInfo.email && data.personalInfo.phone) {
-    score += 20;
-  } else {
-    suggestions.push("Complete your personal identity section.");
-  }
-
-  return {
-    score: Math.min(100, score),
-    suggestions: suggestions.slice(0, 3) // Limit to 3 suggestions
-  };
+  return { score, status, color, suggestions: suggestions.slice(0, 3) };
 }

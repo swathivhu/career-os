@@ -3,9 +3,10 @@
 import React, { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useResumeData, ResumeTemplate } from '@/hooks/use-resume-data';
+import { calculateATSScore } from '@/lib/ats-engine';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Printer, Copy, Github, ExternalLink, Layout, Palette } from 'lucide-react';
+import { ArrowLeft, Printer, Copy, Github, ExternalLink, Target, Sparkles, CheckCircle2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -19,23 +20,19 @@ const COLOR_OPTIONS = [
 
 export default function FullPreviewPage() {
   const { data, updateData, isLoaded } = useResumeData();
+  const { score, status, color, suggestions } = useMemo(() => calculateATSScore(data), [data]);
 
-  const isComplete = useMemo(() => {
-    return (
-      data.personalInfo.name && 
-      (data.experience.length > 0 || data.projects.length > 0)
-    );
-  }, [data]);
+  const isComplete = score >= 70;
 
   useEffect(() => {
-    if (isLoaded && !isComplete) {
+    if (isLoaded && score < 40) {
       toast({
         title: "Manifest Incomplete",
-        description: "Your resume may look incomplete. Consider adding a name and at least one project or experience entry.",
+        description: "Your readiness score is low. Consider following the strategic suggestions.",
         variant: "destructive"
       });
     }
-  }, [isLoaded, isComplete]);
+  }, [isLoaded, score]);
 
   const copyAsText = () => {
     const text = `
@@ -81,8 +78,8 @@ ${edu.institution} - ${edu.degree} (${edu.year})
   if (!isLoaded) return null;
 
   return (
-    <div className="min-h-screen bg-white text-[#111111] flex flex-col selection:bg-[#8B0000] selection:text-white print:bg-white print:p-0">
-      <nav className="h-14 border-b border-[#111111]/5 px-xl flex items-center justify-between bg-[#F7F6F3]/50 sticky top-0 z-50 backdrop-blur-sm print:hidden">
+    <div className="min-h-screen bg-[#F7F6F3] text-[#111111] flex flex-col selection:bg-[#8B0000] selection:text-white print:bg-white print:p-0">
+      <nav className="h-14 border-b border-[#111111]/5 px-xl flex items-center justify-between bg-white/80 sticky top-0 z-50 backdrop-blur-sm print:hidden">
          <div className="flex items-center gap-md">
             <Button asChild variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100">
               <Link href="/builder">
@@ -125,52 +122,175 @@ ${edu.institution} - ${edu.degree} (${edu.year})
          </div>
       </nav>
 
-      <div className="flex-grow p-xl flex justify-center print:p-0 print:block">
-        <div className={cn(
-          "max-w-[850px] w-full bg-white min-h-[1100px] shadow-sm print:shadow-none p-xl print:p-0",
-          data.template === 'minimal' ? 'font-sans' : 'font-serif'
-        )}>
-          {data.template === 'modern' ? (
-            <div className="grid grid-cols-12 h-full gap-xl">
-               {/* Modern Sidebar */}
-               <aside className="col-span-4 p-lg -ml-xl -mt-xl -mb-xl print:-ml-0 print:-mt-0" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
-                  <div className="space-y-xl">
-                    <header className="space-y-md">
-                      <h1 className="text-4xl font-headline italic uppercase leading-none border-b border-white/20 pb-md">
-                        {data.personalInfo.name || 'Manifest Identity'}
-                      </h1>
-                      <div className="space-y-sm text-sm font-bold uppercase tracking-widest opacity-80">
-                        <p>{data.personalInfo.email}</p>
-                        <p>{data.personalInfo.phone}</p>
-                        <p>{data.personalInfo.location}</p>
-                      </div>
-                    </header>
+      <div className="flex-grow grid grid-cols-1 lg:grid-cols-12 max-w-[1600px] mx-auto w-full print:block print:p-0">
+        {/* ATS Dashboard Side Panel */}
+        <aside className="lg:col-span-3 p-xl space-y-xl border-r border-[#111111]/5 print:hidden">
+          <div className="space-y-lg sticky top-24">
+            <header className="space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40">Verification Layer</span>
+              <h2 className="text-3xl font-headline italic">Readiness Dashboard</h2>
+            </header>
 
-                    {(data.skills.technical.length > 0 || data.skills.soft.length > 0) && (
+            <div className="flex flex-col items-center p-xl bg-white border border-[#111111]/5 space-y-md">
+               <div className="relative h-32 w-32 flex items-center justify-center">
+                  <svg className="h-full w-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#111111]/5" />
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" 
+                      strokeDasharray="283" 
+                      strokeDashoffset={283 - (283 * score / 100)}
+                      className={color}
+                      style={{ transition: 'stroke-dashoffset 0.5s ease-out', transform: 'rotate(-90deg)', transformOrigin: 'center' }} 
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-headline italic leading-none">{score}%</span>
+                  </div>
+               </div>
+               <div className="text-center space-y-1">
+                 <p className={cn("text-xs font-bold uppercase tracking-widest", color)}>{status}</p>
+                 <p className="text-[10px] uppercase font-bold opacity-30">ATS Optimization Index</p>
+               </div>
+            </div>
+
+            {suggestions.length > 0 && (
+              <div className="space-y-md">
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-[#8B0000]" />
+                  Strategic Gains
+                </h3>
+                <div className="space-y-sm">
+                   {suggestions.map((s, i) => (
+                     <div key={i} className="flex gap-2 p-3 bg-white border border-[#111111]/5">
+                        <Target className="h-3 w-3 mt-0.5 shrink-0 opacity-40" />
+                        <span className="text-[11px] font-medium italic leading-relaxed">{s}</span>
+                     </div>
+                   ))}
+                </div>
+              </div>
+            )}
+
+            {isComplete && (
+               <div className="p-md bg-[#111111] text-white flex items-center gap-3">
+                 <CheckCircle2 className="h-5 w-5 text-green-400" />
+                 <p className="text-[10px] font-bold uppercase tracking-widest">Manifest Authenticated</p>
+               </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Resume Render */}
+        <main className="lg:col-span-9 p-xl flex justify-center print:p-0">
+          <div className={cn(
+            "max-w-[850px] w-full bg-white min-h-[1100px] shadow-sm print:shadow-none p-xl print:p-0",
+            data.template === 'minimal' ? 'font-sans' : 'font-serif'
+          )}>
+            {data.template === 'modern' ? (
+              <div className="grid grid-cols-12 h-full gap-xl">
+                 <aside className="col-span-4 p-lg -ml-xl -mt-xl -mb-xl print:-ml-0 print:-mt-0" style={{ backgroundColor: data.colorTheme, color: 'white' }}>
+                    <div className="space-y-xl">
+                      <header className="space-y-md">
+                        <h1 className="text-4xl font-headline italic uppercase leading-none border-b border-white/20 pb-md">
+                          {data.personalInfo.name || 'Manifest Identity'}
+                        </h1>
+                        <div className="space-y-sm text-sm font-bold uppercase tracking-widest opacity-80">
+                          <p>{data.personalInfo.email}</p>
+                          <p>{data.personalInfo.phone}</p>
+                          <p>{data.personalInfo.location}</p>
+                        </div>
+                      </header>
+
+                      {(data.skills.technical.length > 0) && (
+                        <section className="space-y-md">
+                          <h2 className="text-xs font-bold uppercase tracking-[0.4em] border-b border-white/20 pb-xs">Skills</h2>
+                          <div className="space-y-4">
+                            {data.skills.technical.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {data.skills.technical.map(s => <span key={s} className="bg-white/10 px-2 py-1 rounded-none text-[10px] font-bold uppercase">{s}</span>)}
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
                       <section className="space-y-md">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.4em] border-b border-white/20 pb-xs">Skills</h2>
-                        <div className="space-y-4">
-                          {data.skills.technical.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {data.skills.technical.map(s => <span key={s} className="bg-white/10 px-2 py-1 rounded-none text-[10px] font-bold uppercase">{s}</span>)}
+                        <h2 className="text-xs font-bold uppercase tracking-[0.4em] border-b border-white/20 pb-xs">Artifacts</h2>
+                        <div className="space-y-2 text-[10px] font-bold uppercase tracking-widest opacity-80">
+                           {data.links.github && <p className="truncate">GH: {data.links.github}</p>}
+                           {data.links.linkedin && <p className="truncate">LI: {data.links.linkedin}</p>}
+                        </div>
+                      </section>
+                    </div>
+                 </aside>
+
+                 <main className="col-span-8 space-y-xl">
+                    {data.summary && (
+                      <section className="space-y-md">
+                        <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>01. Strategic Summary</h2>
+                        <p className="text-lg leading-relaxed italic font-medium">{data.summary}</p>
+                      </section>
+                    )}
+
+                    {data.experience.length > 0 && (
+                      <section className="space-y-md">
+                        <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>02. Professional History</h2>
+                        <div className="space-y-lg">
+                          {data.experience.map((exp, i) => (
+                            <div key={i} className="space-y-sm page-break-inside-avoid">
+                              <div className="flex justify-between items-baseline">
+                                <h3 className="text-2xl font-headline italic">{exp.company}</h3>
+                                <span className="text-xs font-bold uppercase tracking-widest opacity-40">{exp.duration}</span>
+                              </div>
+                              <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-60">{exp.role}</p>
+                              <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap">{exp.description}</p>
                             </div>
-                          )}
+                          ))}
                         </div>
                       </section>
                     )}
 
-                    <section className="space-y-md">
-                      <h2 className="text-xs font-bold uppercase tracking-[0.4em] border-b border-white/20 pb-xs">Artifacts</h2>
-                      <div className="space-y-2 text-[10px] font-bold uppercase tracking-widest opacity-80">
-                         {data.links.github && <p className="truncate">GH: {data.links.github}</p>}
-                         {data.links.linkedin && <p className="truncate">LI: {data.links.linkedin}</p>}
-                      </div>
-                    </section>
+                    {data.projects.length > 0 && (
+                      <section className="space-y-md">
+                        <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>03. Strategic Artifacts</h2>
+                        <div className="space-y-lg">
+                          {data.projects.map((proj, i) => (
+                            <div key={i} className="space-y-sm page-break-inside-avoid">
+                              <h3 className="text-2xl font-headline italic">{proj.title}</h3>
+                              <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap italic">{proj.description}</p>
+                              <div className="flex flex-wrap gap-2">
+                                {proj.techStack.map(s => <span key={s} className="text-[10px] font-bold border border-[#111111]/10 px-1 uppercase tracking-tighter">{s}</span>)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                 </main>
+              </div>
+            ) : (
+              <div className="space-y-xl">
+                <header className={cn(
+                  "border-b-2 pb-xl",
+                  data.template === 'minimal' ? 'text-left border-[#111111]/10' : 'text-center border-[#111111]'
+                )}>
+                  <div className="space-y-2">
+                    <h1 className={cn(
+                      "font-headline italic uppercase tracking-tighter leading-none",
+                      data.template === 'minimal' ? 'text-4xl' : 'text-6xl'
+                    )}>
+                      {data.personalInfo.name || 'Manifest Identity'}
+                    </h1>
+                    <div className={cn(
+                      "flex gap-md text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex-wrap",
+                      data.template === 'minimal' ? 'justify-start' : 'justify-center'
+                    )}>
+                      {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
+                      {data.personalInfo.phone && <span>• {data.personalInfo.phone}</span>}
+                      {data.personalInfo.location && <span>• {data.personalInfo.location}</span>}
+                    </div>
                   </div>
-               </aside>
+                </header>
 
-               {/* Modern Main Content */}
-               <main className="col-span-8 space-y-xl">
+                <div className="space-y-xl">
                   {data.summary && (
                     <section className="space-y-md">
                       <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>01. Strategic Summary</h2>
@@ -202,87 +322,26 @@ ${edu.institution} - ${edu.degree} (${edu.year})
                       <div className="space-y-lg">
                         {data.projects.map((proj, i) => (
                           <div key={i} className="space-y-sm page-break-inside-avoid">
-                            <div className="flex justify-between items-baseline">
-                              <h3 className="text-2xl font-headline italic">{proj.title}</h3>
-                            </div>
+                            <h3 className="text-2xl font-headline italic">{proj.title}</h3>
                             <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap italic">{proj.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {proj.techStack.map(s => <span key={s} className="text-[10px] font-bold border border-[#111111]/10 px-1 uppercase tracking-tighter">{s}</span>)}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </section>
                   )}
-               </main>
-            </div>
-          ) : (
-            <div className="space-y-xl">
-              <header className={cn(
-                "border-b-2 pb-xl",
-                data.template === 'minimal' ? 'text-left border-[#111111]/10' : 'text-center border-[#111111]'
-              )}>
-                <div className="space-y-2">
-                  <h1 className={cn(
-                    "font-headline italic uppercase tracking-tighter leading-none",
-                    data.template === 'minimal' ? 'text-4xl' : 'text-6xl'
-                  )}>
-                    {data.personalInfo.name || 'Manifest Identity'}
-                  </h1>
-                  <div className={cn(
-                    "flex gap-md text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex-wrap",
-                    data.template === 'minimal' ? 'justify-start' : 'justify-center'
-                  )}>
-                    {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
-                    {data.personalInfo.phone && <span>• {data.personalInfo.phone}</span>}
-                    {data.personalInfo.location && <span>• {data.personalInfo.location}</span>}
-                  </div>
                 </div>
-              </header>
-
-              <div className="space-y-xl">
-                {data.summary && (
-                  <section className="space-y-md">
-                    <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>01. Strategic Summary</h2>
-                    <p className="text-lg leading-relaxed italic font-medium">{data.summary}</p>
-                  </section>
-                )}
-
-                {data.experience.length > 0 && (
-                  <section className="space-y-md">
-                    <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>02. Professional History</h2>
-                    <div className="space-y-lg">
-                      {data.experience.map((exp, i) => (
-                        <div key={i} className="space-y-sm page-break-inside-avoid">
-                          <div className="flex justify-between items-baseline">
-                            <h3 className="text-2xl font-headline italic">{exp.company}</h3>
-                            <span className="text-xs font-bold uppercase tracking-widest opacity-40">{exp.duration}</span>
-                          </div>
-                          <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-60">{exp.role}</p>
-                          <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap">{exp.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {data.projects.length > 0 && (
-                  <section className="space-y-md">
-                    <h2 className="text-xs font-bold uppercase tracking-[0.4em]" style={{ color: data.colorTheme }}>03. Strategic Artifacts</h2>
-                    <div className="space-y-lg">
-                      {data.projects.map((proj, i) => (
-                        <div key={i} className="space-y-sm page-break-inside-avoid">
-                          <h3 className="text-2xl font-headline italic">{proj.title}</h3>
-                          <p className="text-md leading-relaxed opacity-80 whitespace-pre-wrap italic">{proj.description}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {proj.techStack.map(s => <span key={s} className="text-[10px] font-bold border border-[#111111]/10 px-1 uppercase tracking-tighter">{s}</span>)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
               </div>
-            </div>
-          )}
-        </div>
+            )}
+            <footer className="pt-xl border-t border-[#111111]/10 text-center opacity-20 hidden print:block">
+              <p className="text-[10px] font-bold uppercase tracking-[0.5em] italic">
+                Manifest Generated via KodNest Premium Build System
+              </p>
+            </footer>
+          </div>
+        </main>
       </div>
 
       <style jsx global>{`
