@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,9 +10,23 @@ export interface RBLinks {
 
 export type RBStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+export const RB_CHECKLIST = [
+  { id: 'save', label: 'All form sections save to localStorage' },
+  { id: 'preview', label: 'Live preview updates in real-time' },
+  { id: 'template', label: 'Template switching preserves data' },
+  { id: 'theme', label: 'Color theme persists after refresh' },
+  { id: 'ats', label: 'ATS score calculates correctly' },
+  { id: 'live', label: 'Score updates live on edit' },
+  { id: 'export', label: 'Export buttons work (copy/download)' },
+  { id: 'empty', label: 'Empty states handled gracefully' },
+  { id: 'mobile', label: 'Mobile responsive layout works' },
+  { id: 'console', label: 'No console errors on any page' },
+];
+
 export function useRBStatus() {
   const [artifacts, setArtifacts] = useState<Record<string, string>>({});
   const [links, setLinks] = useState<RBLinks>({ lovable: '', github: '', deployment: '' });
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -32,6 +45,16 @@ export function useRBStatus() {
         console.error('Failed to parse RB links', e);
       }
     }
+
+    const storedChecklist = localStorage.getItem('rb_checklist');
+    if (storedChecklist) {
+      try {
+        setChecklist(JSON.parse(storedChecklist));
+      } catch (e) {
+        console.error('Failed to parse RB checklist', e);
+      }
+    }
+
     setIsLoaded(true);
   }, []);
 
@@ -47,6 +70,12 @@ export function useRBStatus() {
     localStorage.setItem('rb_final_submission', JSON.stringify(newLinks));
   };
 
+  const toggleChecklist = (id: string) => {
+    const newChecklist = { ...checklist, [id]: !checklist[id] };
+    setChecklist(newChecklist);
+    localStorage.setItem('rb_checklist', JSON.stringify(newChecklist));
+  };
+
   const isStepComplete = (step: RBStep) => !!artifacts[step];
   
   const canAccessStep = (step: RBStep) => {
@@ -58,17 +87,19 @@ export function useRBStatus() {
   };
 
   const completedStepsCount = Object.keys(artifacts).length;
+  const passedTestsCount = Object.values(checklist).filter(Boolean).length;
   
   const isValidUrl = (url: string) => {
     try {
       new URL(url);
-      return true;
+      return url.startsWith('http');
     } catch {
       return false;
     }
   };
 
   const isShippable = completedStepsCount === 8 && 
+                     passedTestsCount === RB_CHECKLIST.length &&
                      isValidUrl(links.lovable) && 
                      isValidUrl(links.github) && 
                      isValidUrl(links.deployment);
@@ -84,9 +115,12 @@ export function useRBStatus() {
     saveArtifact,
     links,
     updateLink,
+    checklist,
+    toggleChecklist,
     isStepComplete,
     canAccessStep,
     completedStepsCount,
+    passedTestsCount,
     isShippable,
     isLoaded,
     status: getStatus()
