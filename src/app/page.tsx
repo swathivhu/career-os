@@ -19,7 +19,7 @@ export default function CareerOSLanding() {
         </div>
         <div className="flex items-center gap-lg">
           <Link href="/dashboard" className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-colors">Placement</Link>
-          <Link href="/rb/01-problem" className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-colors">Resume Builder</Link>
+          <Link href="/builder" className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-colors">Resume Builder</Link>
           <Link href="/deploy" className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-colors">Deployment Hub</Link>
         </div>
       </nav>

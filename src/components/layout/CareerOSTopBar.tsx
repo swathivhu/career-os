@@ -15,7 +15,7 @@ export function CareerOSTopBar() {
 
   const navItems = [
     { label: 'Placement', href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-    { label: 'Resume Builder', href: '/rb/01-problem', icon: <PenTool className="h-4 w-4" /> },
+    { label: 'Resume Builder', href: '/builder', icon: <PenTool className="h-4 w-4" /> },
     { label: 'Deployment Hub', href: '/deploy', icon: <Rocket className="h-4 w-4" /> },
   ];
 
@@ -29,7 +29,14 @@ export function CareerOSTopBar() {
         <div className="h-4 w-[1px] bg-white/10 hidden md:block" />
         <nav className="hidden md:flex items-center gap-lg">
           {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href.split('/')[1]);
+            // Determine if the current item is active based on the path
+            let isActive = false;
+            if (item.href === '/builder') {
+              isActive = ['/builder', '/preview', '/proof'].some(path => pathname.startsWith(path)) || pathname.startsWith('/rb/');
+            } else {
+              isActive = pathname.startsWith(item.href);
+            }
+
             return (
               <Link
                 key={item.href}
