@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -62,12 +63,14 @@ export function useTestStatus() {
     
     setCheckedIds(newIds);
     localStorage.setItem("prp_tests", JSON.stringify(newIds));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const updateLink = (key: keyof ProjectLinks, value: string) => {
     const newLinks = { ...links, [key]: value };
     setLinks(newLinks);
     localStorage.setItem("prp_final_submission", JSON.stringify(newLinks));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const resetTests = () => {
@@ -75,6 +78,7 @@ export function useTestStatus() {
     setLinks({ lovable: "", github: "", deployment: "" });
     localStorage.removeItem("prp_tests");
     localStorage.removeItem("prp_final_submission");
+    window.dispatchEvent(new Event('storage'));
   };
 
   const passCount = checkedIds.length;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,18 +63,21 @@ export function useRBStatus() {
     const newArtifacts = { ...artifacts, [step]: value };
     setArtifacts(newArtifacts);
     localStorage.setItem(`rb_step_${step}_artifact`, value);
+    window.dispatchEvent(new Event('storage'));
   };
 
   const updateLink = (key: keyof RBLinks, value: string) => {
     const newLinks = { ...links, [key]: value };
     setLinks(newLinks);
     localStorage.setItem('rb_final_submission', JSON.stringify(newLinks));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const toggleChecklist = (id: string) => {
     const newChecklist = { ...checklist, [id]: !checklist[id] };
     setChecklist(newChecklist);
     localStorage.setItem('rb_checklist', JSON.stringify(newChecklist));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const isStepComplete = (step: RBStep) => !!artifacts[step];
