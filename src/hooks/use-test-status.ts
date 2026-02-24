@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,19 +22,37 @@ export const TEST_CHECKLIST: TestItem[] = [
   { id: "no-errors", label: "No console errors on main pages", howTo: "Open Developer Tools (F12) and verify the console is clear of red errors." },
 ];
 
+export interface ProjectLinks {
+  lovable: string;
+  github: string;
+  deployment: string;
+}
+
 export function useTestStatus() {
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [links, setLinks] = useState<ProjectLinks>({ lovable: "", github: "", deployment: "" });
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("job_tracker_tests");
-    if (stored) {
+    const storedTests = localStorage.getItem("job_tracker_tests");
+    const storedLinks = localStorage.getItem("job_tracker_links");
+    
+    if (storedTests) {
       try {
-        setCheckedIds(JSON.parse(stored));
+        setCheckedIds(JSON.parse(storedTests));
       } catch (e) {
         console.error("Failed to parse tests", e);
       }
     }
+
+    if (storedLinks) {
+      try {
+        setLinks(JSON.parse(storedLinks));
+      } catch (e) {
+        console.error("Failed to parse links", e);
+      }
+    }
+    
     setIsLoaded(true);
   }, []);
 
@@ -46,13 +65,41 @@ export function useTestStatus() {
     localStorage.setItem("job_tracker_tests", JSON.stringify(newIds));
   };
 
+  const updateLink = (key: keyof ProjectLinks, value: string) => {
+    const newLinks = { ...links, [key]: value };
+    setLinks(newLinks);
+    localStorage.setItem("job_tracker_links", JSON.stringify(newLinks));
+  };
+
   const resetTests = () => {
     setCheckedIds([]);
+    setLinks({ lovable: "", github: "", deployment: "" });
     localStorage.removeItem("job_tracker_tests");
+    localStorage.removeItem("job_tracker_links");
   };
 
   const passCount = checkedIds.length;
   const isFullyVerified = passCount === TEST_CHECKLIST.length;
+  const hasAllLinks = !!(links.lovable && links.github && links.deployment);
+  const isShippable = isFullyVerified && hasAllLinks;
 
-  return { checkedIds, toggleTest, resetTests, passCount, isFullyVerified, isLoaded };
+  const getStatus = () => {
+    if (isShippable) return "Shipped";
+    if (passCount > 0 || hasAllLinks) return "In Progress";
+    return "Not Started";
+  };
+
+  return { 
+    checkedIds, 
+    toggleTest, 
+    links, 
+    updateLink, 
+    resetTests, 
+    passCount, 
+    isFullyVerified, 
+    hasAllLinks,
+    isShippable,
+    isLoaded,
+    status: getStatus()
+  };
 }

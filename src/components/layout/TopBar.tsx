@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, Rocket } from "lucide-react";
+import { Menu, Rocket, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -16,7 +17,7 @@ import { useTestStatus } from "@/hooks/use-test-status";
 
 export function TopBar() {
   const pathname = usePathname();
-  const { isFullyVerified } = useTestStatus();
+  const { isShippable, status } = useTestStatus();
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
@@ -26,7 +27,7 @@ export function TopBar() {
     { name: "Proof", href: "/proof" },
   ];
 
-  if (isFullyVerified) {
+  if (isShippable) {
     navLinks.push({ name: "Ship", href: "/ship" });
   }
 
@@ -44,10 +45,10 @@ export function TopBar() {
             className={cn(
               "relative px-sm py-xs text-[10px] font-bold uppercase tracking-[0.2em] transition-standard hover:text-primary flex items-center gap-xs",
               isActive ? "text-primary" : "text-muted-foreground",
-              isShip && "text-primary animate-pulse"
+              isShip && "text-green-600 animate-pulse"
             )}
           >
-            {isShip && <Rocket className="h-3 w-3" />}
+            {isShip ? <CheckCircle2 className="h-3 w-3" /> : null}
             {link.name}
             {isActive && (
               <span className="absolute bottom-0 left-sm right-sm h-[2px] bg-primary animate-in fade-in slide-in-from-bottom-1" />
@@ -96,10 +97,12 @@ export function TopBar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "py-sm text-xs font-bold uppercase tracking-[0.2em] border-b border-border/50",
-                    pathname === link.href ? "text-primary" : "text-muted-foreground"
+                    "py-sm text-xs font-bold uppercase tracking-[0.2em] border-b border-border/50 flex items-center gap-2",
+                    pathname === link.href ? "text-primary" : "text-muted-foreground",
+                    link.name === "Ship" && "text-green-600"
                   )}
                 >
+                  {link.name === "Ship" && <CheckCircle2 className="h-3 w-3" />}
                   {link.name}
                 </Link>
               ))}
@@ -110,9 +113,17 @@ export function TopBar() {
 
       <div className="hidden md:flex items-center">
         <div className="h-8 w-[1px] bg-border mx-md" />
-        <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground opacity-60">
-          Job Notification Tracker v1.0
-        </span>
+        <div className="flex flex-col items-end">
+          <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground opacity-60">
+            System v1.0
+          </span>
+          <span className={cn(
+            "text-[8px] font-bold uppercase tracking-widest",
+            status === "Shipped" ? "text-green-600" : "text-primary"
+          )}>
+            Status: {status}
+          </span>
+        </div>
       </div>
     </div>
   );
