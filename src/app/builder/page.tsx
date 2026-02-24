@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useResumeData } from '@/hooks/use-resume-data';
 import { calculateATSScore } from '@/lib/ats-engine';
@@ -19,12 +19,24 @@ import {
   Target, 
   Sparkles,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  Github,
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
+import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function BuilderPage() {
   const { data, updateData, loadSampleData, resetData, isLoaded } = useResumeData();
+  const [skillInputs, setSkillInputs] = useState({ technical: '', soft: '', tools: '' });
 
   const { score, suggestions } = useMemo(() => calculateATSScore(data), [data]);
 
@@ -39,7 +51,7 @@ export default function BuilderPage() {
       ? { institution: '', degree: '', year: '', location: '' }
       : category === 'experience'
       ? { company: '', role: '', duration: '', description: '' }
-      : { title: '', description: '', link: '' };
+      : { id: crypto.randomUUID(), title: '', description: '', techStack: [], liveUrl: '', githubUrl: '' };
     
     updateData({ ...data, [category]: [...data[category], newItem] });
   };
@@ -48,6 +60,46 @@ export default function BuilderPage() {
     const updated = [...data[category]];
     updated.splice(index, 1);
     updateData({ ...data, [category]: updated });
+  };
+
+  const addSkill = (category: keyof typeof data.skills, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && skillInputs[category].trim()) {
+      e.preventDefault();
+      const skill = skillInputs[category].trim();
+      if (!data.skills[category].includes(skill)) {
+        updateData({
+          ...data,
+          skills: {
+            ...data.skills,
+            [category]: [...data.skills[category], skill]
+          }
+        });
+      }
+      setSkillInputs({ ...skillInputs, [category]: '' });
+    }
+  };
+
+  const removeSkill = (category: keyof typeof data.skills, skill: string) => {
+    updateData({
+      ...data,
+      skills: {
+        ...data.skills,
+        [category]: data.skills[category].filter(s => s !== skill)
+      }
+    });
+  };
+
+  const suggestSkills = () => {
+    setTimeout(() => {
+      updateData({
+        ...data,
+        skills: {
+          technical: Array.from(new Set([...data.skills.technical, "TypeScript", "React", "Node.js", "PostgreSQL", "GraphQL"])),
+          soft: Array.from(new Set([...data.skills.soft, "Team Leadership", "Problem Solving"])),
+          tools: Array.from(new Set([...data.skills.tools, "Git", "Docker", "AWS"]))
+        }
+      });
+    }, 1000);
   };
 
   const ACTION_VERBS = ['Built', 'Developed', 'Designed', 'Implemented', 'Led', 'Improved', 'Created', 'Optimized', 'Automated'];
@@ -66,9 +118,24 @@ export default function BuilderPage() {
     return issues;
   };
 
+  const addProjectSkill = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const input = e.currentTarget;
+      const val = input.value.trim();
+      if (val) {
+        const next = [...data.projects];
+        if (!next[index].techStack.includes(val)) {
+          next[index].techStack.push(val);
+          updateData({ ...data, projects: next });
+        }
+        input.value = '';
+      }
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F7F6F3] text-[#111111] font-body">
-      {/* Navigation */}
       <nav className="h-16 border-b border-[#111111]/10 px-xl flex items-center justify-between sticky top-0 bg-[#F7F6F3]/80 backdrop-blur-md z-50">
         <div className="flex items-center gap-md">
           <Link href="/" className="font-headline text-xl font-bold tracking-widest uppercase">
@@ -83,7 +150,6 @@ export default function BuilderPage() {
       </nav>
 
       <main className="flex-grow grid grid-cols-1 lg:grid-cols-10 h-[calc(100vh-64px)] overflow-hidden">
-        {/* Left: Form Workspace (60%) */}
         <div className="lg:col-span-6 overflow-y-auto p-xl space-y-xl bg-white/50 border-r border-[#111111]/5">
           <header className="space-y-xs">
             <h2 className="text-4xl font-headline italic">Strategic Input</h2>
@@ -101,9 +167,7 @@ export default function BuilderPage() {
             </Button>
           </div>
 
-          {/* Sections */}
           <section className="space-y-xl pb-xl">
-            {/* Personal Info */}
             <div className="space-y-md">
               <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">01. Personal Identity</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
@@ -126,7 +190,6 @@ export default function BuilderPage() {
               </div>
             </div>
 
-            {/* Summary */}
             <div className="space-y-md">
               <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">02. Strategic Summary</h3>
               <Textarea 
@@ -135,15 +198,8 @@ export default function BuilderPage() {
                 className="min-h-[140px] rounded-none border-[#111111]/10 p-md italic leading-relaxed text-sm" 
                 placeholder="A high-stakes professional overview of your career and unique value proposition..."
               />
-              <div className="flex justify-between items-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 italic">Word count: {data.summary.trim().split(/\s+/).filter(Boolean).length} (Target: 40-120)</p>
-                {data.summary.length > 0 && data.summary.trim().split(/\s+/).filter(Boolean).length < 40 && (
-                  <span className="text-[9px] font-bold uppercase text-[#8B0000] italic">Too brief for maximum impact.</span>
-                )}
-              </div>
             </div>
 
-            {/* Experience */}
             <div className="space-y-md">
               <div className="flex justify-between items-center border-b border-[#111111]/5 pb-xs">
                 <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">03. Professional History</h3>
@@ -175,138 +231,189 @@ export default function BuilderPage() {
                         const next = [...data.experience];
                         next[idx].description = e.target.value;
                         updateData({ ...data, experience: next });
-                      }} placeholder="Describe your structural impact and measurable achievements..." className="min-h-[100px] rounded-none border-transparent bg-transparent p-0 italic text-sm" />
-                      
-                      {guidance.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {guidance.map((g, i) => (
-                            <p key={i} className="text-[9px] font-bold uppercase tracking-widest text-[#8B0000]/60 italic flex items-center gap-1">
-                              <AlertCircle className="h-2 w-2" /> {g}
-                            </p>
-                          ))}
-                        </div>
-                      )}
+                      }} placeholder="Describe your structural impact..." className="min-h-[100px] rounded-none border-transparent bg-transparent p-0 italic text-sm" />
+                      {guidance.map((g, i) => (
+                        <p key={i} className="text-[9px] font-bold uppercase tracking-widest text-[#8B0000]/60 italic flex items-center gap-1 mt-1">
+                          <AlertCircle className="h-2 w-2" /> {g}
+                        </p>
+                      ))}
                     </Card>
                   );
                 })}
               </div>
             </div>
 
-            {/* Education */}
             <div className="space-y-md">
               <div className="flex justify-between items-center border-b border-[#111111]/5 pb-xs">
-                <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">04. Academic Background</h3>
-                <Button onClick={() => addItem('education')} variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100">
-                  <Plus className="h-3 w-3 mr-1" /> Add Entry
+                <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">04. Technical Domain</h3>
+                <Button onClick={suggestSkills} variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest text-[#8B0000]">
+                  <Sparkles className="h-3 w-3 mr-1" /> Suggest Skills
                 </Button>
               </div>
-              <div className="space-y-md">
-                {data.education.map((edu, idx) => (
-                  <Card key={idx} className="rounded-none border-[#111111]/5 bg-white/30 p-md relative group">
-                    <Button onClick={() => removeItem('education', idx)} variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-[#8B0000] hover:bg-transparent">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                    <div className="grid grid-cols-2 gap-md">
-                      <Input value={edu.institution} onChange={(e) => {
-                        const next = [...data.education];
-                        next[idx].institution = e.target.value;
-                        updateData({ ...data, education: next });
-                      }} placeholder="Institution" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
-                      <Input value={edu.degree} onChange={(e) => {
-                        const next = [...data.education];
-                        next[idx].degree = e.target.value;
-                        updateData({ ...data, education: next });
-                      }} placeholder="Degree" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
+              <div className="space-y-lg">
+                {(['technical', 'soft', 'tools'] as const).map((cat) => (
+                  <div key={cat} className="space-y-sm">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                      {cat === 'technical' ? 'Technical Skills' : cat === 'soft' ? 'Soft Skills' : 'Tools & Technologies'} ({data.skills[cat].length})
+                    </Label>
+                    <div className="flex flex-wrap gap-2 p-2 border border-[#111111]/10 bg-white min-h-[48px]">
+                      {data.skills[cat].map((skill) => (
+                        <Badge key={skill} variant="secondary" className="rounded-none px-2 py-1 bg-[#111111]/5 text-[#111111] border-none flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest">
+                          {skill}
+                          <button onClick={() => removeSkill(cat, skill)} className="hover:text-[#8B0000]"><X className="h-3 w-3" /></button>
+                        </Badge>
+                      ))}
+                      <input
+                        value={skillInputs[cat]}
+                        onChange={(e) => setSkillInputs({ ...skillInputs, [cat]: e.target.value })}
+                        onKeyDown={(e) => addSkill(cat, e)}
+                        placeholder="Add skill..."
+                        className="flex-grow bg-transparent border-none focus:ring-0 text-sm italic h-8"
+                      />
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Skills */}
             <div className="space-y-md">
-              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">05. Technical Domain</h3>
-              <Input value={data.skills} onChange={(e) => updateData({ ...data, skills: e.target.value })} placeholder="React, TypeScript, Node.js, SQL, Distributed Systems..." className="rounded-none border-[#111111]/10 h-12 focus:ring-[#8B0000]" />
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 italic">Separate skills with commas for optimal parser detection.</p>
+              <div className="flex justify-between items-center border-b border-[#111111]/5 pb-xs">
+                <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">05. Strategic Artifacts</h3>
+                <Button onClick={() => addItem('projects')} variant="ghost" size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100">
+                  <Plus className="h-3 w-3 mr-1" /> Add Project
+                </Button>
+              </div>
+              <Accordion type="multiple" className="w-full space-y-md">
+                {data.projects.map((proj, idx) => (
+                  <AccordionItem key={proj.id} value={proj.id} className="border border-[#111111]/5 bg-white/30 px-md">
+                    <AccordionTrigger className="hover:no-underline py-md">
+                      <div className="flex justify-between items-center w-full text-left">
+                        <span className="font-headline italic text-lg">{proj.title || `Artifact 0${idx + 1}`}</span>
+                        <Button onClick={(e) => { e.stopPropagation(); removeItem('projects', idx); }} variant="ghost" size="icon" className="h-6 w-6 text-[#8B0000] opacity-40 hover:opacity-100">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-md pb-md">
+                      <div className="space-y-sm">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
+                        <Input value={proj.title} onChange={(e) => {
+                          const next = [...data.projects];
+                          next[idx].title = e.target.value;
+                          updateData({ ...data, projects: next });
+                        }} className="rounded-none border-[#111111]/10 h-10" />
+                      </div>
+                      <div className="space-y-sm">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Description ({proj.description.length}/200)</Label>
+                        <Textarea 
+                          value={proj.description} 
+                          maxLength={200}
+                          onChange={(e) => {
+                            const next = [...data.projects];
+                            next[idx].description = e.target.value;
+                            updateData({ ...data, projects: next });
+                          }} 
+                          className="min-h-[80px] rounded-none border-[#111111]/10 italic text-sm" 
+                        />
+                      </div>
+                      <div className="space-y-sm">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Tech Stack (Enter to add)</Label>
+                        <div className="flex flex-wrap gap-2 p-2 border border-[#111111]/10 bg-white">
+                          {proj.techStack.map((s) => (
+                            <Badge key={s} variant="outline" className="rounded-none text-[9px] uppercase font-bold tracking-widest py-1">
+                              {s}
+                              <button onClick={() => {
+                                const next = [...data.projects];
+                                next[idx].techStack = next[idx].techStack.filter(item => item !== s);
+                                updateData({ ...data, projects: next });
+                              }} className="ml-1"><X className="h-2 w-2" /></button>
+                            </Badge>
+                          ))}
+                          <input onKeyDown={(e) => addProjectSkill(idx, e)} className="flex-grow bg-transparent border-none focus:ring-0 text-xs italic" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-md">
+                        <div className="space-y-sm">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Live URL</Label>
+                          <Input value={proj.liveUrl} onChange={(e) => {
+                            const next = [...data.projects];
+                            next[idx].liveUrl = e.target.value;
+                            updateData({ ...data, projects: next });
+                          }} className="rounded-none border-[#111111]/10 h-10" />
+                        </div>
+                        <div className="space-y-sm">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">GitHub URL</Label>
+                          <Input value={proj.githubUrl} onChange={(e) => {
+                            const next = [...data.projects];
+                            next[idx].githubUrl = e.target.value;
+                            updateData({ ...data, projects: next });
+                          }} className="rounded-none border-[#111111]/10 h-10" />
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
 
-            {/* Links */}
             <div className="space-y-md">
-              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">06. Identity Verification</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-                <div className="space-y-sm">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">GitHub</Label>
-                  <Input value={data.links.github} onChange={(e) => updateData({...data, links: {...data.links, github: e.target.value}})} className="rounded-none border-[#111111]/10 h-12 focus:ring-[#8B0000]" placeholder="github.com/username" />
-                </div>
-                <div className="space-y-sm">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">LinkedIn</Label>
-                  <Input value={data.links.linkedin} onChange={(e) => updateData({...data, links: {...data.links, linkedin: e.target.value}})} className="rounded-none border-[#111111]/10 h-12 focus:ring-[#8B0000]" placeholder="linkedin.com/in/username" />
-                </div>
-              </div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#8B0000]">06. Academic Background</h3>
+              {data.education.map((edu, idx) => (
+                <Card key={idx} className="rounded-none border-[#111111]/5 bg-white/30 p-md relative group">
+                  <Button onClick={() => removeItem('education', idx)} variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-[#8B0000]">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                  <div className="grid grid-cols-2 gap-md">
+                    <Input value={edu.institution} onChange={(e) => {
+                      const next = [...data.education];
+                      next[idx].institution = e.target.value;
+                      updateData({ ...data, education: next });
+                    }} placeholder="Institution" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
+                    <Input value={edu.degree} onChange={(e) => {
+                      const next = [...data.education];
+                      next[idx].degree = e.target.value;
+                      updateData({ ...data, education: next });
+                    }} placeholder="Degree" className="rounded-none border-transparent border-b-[#111111]/10 bg-transparent h-10 px-0" />
+                  </div>
+                </Card>
+              ))}
             </div>
           </section>
         </div>
 
-        {/* Right: Live Preview & Score Panel (40%) */}
         <div className="lg:col-span-4 bg-[#111111] p-xl flex flex-col overflow-hidden">
-          {/* Score & Suggestions */}
           <div className="mb-xl space-y-md">
             <div className="flex justify-between items-end mb-xs">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">ATS Readiness Index</span>
               <span className={`text-2xl font-headline italic ${score >= 80 ? 'text-green-400' : 'text-white'}`}>{score}%</span>
             </div>
             <Progress value={score} className="h-1 bg-white/10 rounded-none [&>div]:bg-[#8B0000]" />
-            
             {suggestions.length > 0 && (
               <div className="mt-md p-md bg-white/5 border border-white/10 space-y-sm">
                 <div className="flex items-center gap-2 text-[#8B0000]">
                   <Sparkles className="h-3 w-3" />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Structural Optimization</span>
                 </div>
-                <div className="space-y-2">
-                  {suggestions.map((s, i) => (
-                    <div key={i} className="flex gap-2 text-[11px] text-white/70 leading-relaxed italic">
-                      <Target className="h-3 w-3 mt-0.5 shrink-0" />
-                      <span>{s}</span>
-                    </div>
-                  ))}
-                </div>
+                {suggestions.map((s, i) => (
+                  <div key={i} className="flex gap-2 text-[11px] text-white/70 leading-relaxed italic">
+                    <Target className="h-3 w-3 mt-0.5 shrink-0" />
+                    <span>{s}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          <header className="flex flex-col space-y-md mb-md border-b border-white/10 pb-md">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Real-time Manifest</span>
-              <Button asChild variant="outline" size="sm" className="rounded-none border-white/20 text-white text-[9px] font-bold uppercase tracking-widest hover:bg-white/5 h-8">
-                <Link href="/preview">Full Preview</Link>
-              </Button>
-            </div>
-            
-            <Tabs 
-              value={data.template} 
-              onValueChange={(v) => updateData({ ...data, template: v as any })}
-              className="w-full"
-            >
-              <TabsList className="bg-white/5 border border-white/10 w-full rounded-none h-10 p-0">
-                <TabsTrigger value="classic" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Classic</TabsTrigger>
-                <TabsTrigger value="modern" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Modern</TabsTrigger>
-                <TabsTrigger value="minimal" className="flex-1 rounded-none text-[9px] font-bold uppercase tracking-widest data-[state=active]:bg-[#8B0000] data-[state=active]:text-white">Minimal</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </header>
-
           <div className="flex-grow overflow-y-auto bg-white p-lg shadow-2xl space-y-md font-body text-[10px] leading-relaxed select-none pointer-events-none origin-top scale-95 lg:scale-100">
-            {/* Live Resume Rendering */}
             <div className={`space-y-md ${data.template === 'minimal' ? 'text-left' : 'text-center'}`}>
               <div className={`pb-md border-b-2 border-[#111111] ${data.template === 'modern' ? 'flex justify-between items-end text-left' : 'space-y-1'}`}>
                 <h1 className={`${data.template === 'modern' ? 'text-2xl' : 'text-xl'} font-headline italic tracking-tight uppercase leading-none`}>
                   {data.personalInfo.name || 'Your Name'}
                 </h1>
-                <div className={`flex ${data.template === 'modern' ? 'flex-col items-end text-[8px]' : 'justify-center gap-2'} uppercase tracking-widest opacity-60 flex-wrap`}>
-                  {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
-                  {data.personalInfo.phone && <span>{data.template === 'modern' ? '' : '•'} {data.personalInfo.phone}</span>}
-                  {data.personalInfo.location && <span>{data.template === 'modern' ? '' : '•'} {data.personalInfo.location}</span>}
+                <div className="flex gap-2 text-[8px] uppercase tracking-widest opacity-60">
+                  <span>{data.personalInfo.email}</span>
+                  <span>•</span>
+                  <span>{data.personalInfo.location}</span>
                 </div>
               </div>
             </div>
@@ -318,51 +425,42 @@ export default function BuilderPage() {
               </div>
             )}
 
-            {data.experience.length > 0 && (
+            {(data.skills.technical.length > 0 || data.skills.soft.length > 0 || data.skills.tools.length > 0) && (
               <div className="space-y-2">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Experience</h4>
-                {data.experience.map((exp, i) => (
-                  <div key={i} className="space-y-0.5">
-                    <div className="flex justify-between font-bold">
-                      <span className="text-sm font-headline italic">{exp.company}</span>
-                      <span className="opacity-40">{exp.duration}</span>
+                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Domain Proficiency</h4>
+                {data.skills.technical.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <span className="font-bold uppercase tracking-widest opacity-40 mr-1">Tech:</span>
+                    {data.skills.technical.map(s => <span key={s} className="bg-[#111111]/5 px-1 font-bold">{s}</span>)}
+                  </div>
+                )}
+                {data.skills.soft.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <span className="font-bold uppercase tracking-widest opacity-40 mr-1">Soft:</span>
+                    {data.skills.soft.map(s => <span key={s} className="bg-[#111111]/5 px-1 font-bold">{s}</span>)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {data.projects.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Strategic Artifacts</h4>
+                {data.projects.map((proj, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-headline italic text-sm">{proj.title}</span>
+                      <div className="flex gap-2">
+                        {proj.githubUrl && <Github className="h-3 w-3 opacity-40" />}
+                        {proj.liveUrl && <ExternalLink className="h-3 w-3 opacity-40" />}
+                      </div>
                     </div>
-                    <p className="font-bold uppercase tracking-widest opacity-70">{exp.role}</p>
-                    <p className="opacity-80 whitespace-pre-wrap">{exp.description}</p>
+                    <p className="opacity-70 italic">{proj.description}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {proj.techStack.map(s => <span key={s} className="text-[8px] font-bold border border-[#111111]/10 px-1 uppercase tracking-tighter">{s}</span>)}
+                    </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {data.education.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Education</h4>
-                {data.education.map((edu, i) => (
-                  <div key={i} className="space-y-0.5">
-                    <div className="flex justify-between font-bold">
-                      <span className="font-headline italic">{edu.institution}</span>
-                      <span className="opacity-40">{edu.year}</span>
-                    </div>
-                    <p className="opacity-70">{edu.degree}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {data.skills && (
-              <div className="space-y-1">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Skills</h4>
-                <p className="font-bold uppercase tracking-widest leading-loose">{data.skills}</p>
-              </div>
-            )}
-
-            {(data.links.github || data.links.linkedin) && (
-              <div className="space-y-1">
-                <h4 className="font-bold uppercase tracking-[0.3em] text-[#8B0000] border-b border-[#111111]/10 pb-0.5">Identities</h4>
-                <div className="flex gap-4">
-                  {data.links.github && <span>GitHub: {data.links.github}</span>}
-                  {data.links.linkedin && <span>LinkedIn: {data.links.linkedin}</span>}
-                </div>
               </div>
             )}
           </div>

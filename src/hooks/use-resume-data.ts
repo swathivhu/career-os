@@ -17,9 +17,12 @@ export interface Experience {
 }
 
 export interface Project {
+  id: string;
   title: string;
   description: string;
-  link: string;
+  techStack: string[];
+  liveUrl: string;
+  githubUrl: string;
 }
 
 export type ResumeTemplate = 'classic' | 'modern' | 'minimal';
@@ -35,7 +38,11 @@ export interface ResumeData {
   education: Education[];
   experience: Experience[];
   projects: Project[];
-  skills: string;
+  skills: {
+    technical: string[];
+    soft: string[];
+    tools: string[];
+  };
   links: {
     github: string;
     linkedin: string;
@@ -51,7 +58,11 @@ const DEFAULT_DATA: ResumeData = {
   education: [],
   experience: [],
   projects: [],
-  skills: '',
+  skills: {
+    technical: [],
+    soft: [],
+    tools: []
+  },
   links: { github: '', linkedin: '' },
   template: 'classic'
 };
@@ -76,10 +87,20 @@ const SAMPLE_DATA: ResumeData = {
     }
   ],
   projects: [
-    { title: 'Deterministic UI Framework', description: 'Implemented a layout engine focused on 8px grid perfection used by 10k+ developers.', link: 'github.com/kodnest/ui' },
-    { title: 'SaaS Manifest Engine', description: 'Built an AI-driven schema generator that reduced onboarding time by 60%.', link: 'github.com/kodnest/manifest' }
+    { 
+      id: '1',
+      title: 'Deterministic UI Framework', 
+      description: 'Implemented a layout engine focused on 8px grid perfection used by 10k+ developers.', 
+      techStack: ['TypeScript', 'React', 'Tailwind'],
+      liveUrl: 'https://ui.kodnest.com',
+      githubUrl: 'github.com/kodnest/ui' 
+    }
   ],
-  skills: 'React, Next.js, TypeScript, Rust, Distributed Systems, UI/UX Design, Docker, AWS, CI/CD',
+  skills: {
+    technical: ['React', 'Next.js', 'TypeScript', 'Rust', 'Distributed Systems'],
+    soft: ['Team Leadership', 'Strategic Planning'],
+    tools: ['Docker', 'AWS', 'CI/CD']
+  },
   links: { github: 'github.com/jdoe', linkedin: 'linkedin.com/in/jdoe' },
   template: 'modern'
 };
@@ -92,7 +113,16 @@ export function useResumeData() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setData(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Handle migration from old skills string if necessary
+        if (typeof parsed.skills === 'string') {
+          parsed.skills = {
+            technical: parsed.skills.split(',').map((s: string) => s.trim()).filter(Boolean),
+            soft: [],
+            tools: []
+          };
+        }
+        setData(parsed);
       } catch (e) {
         console.error('Failed to parse resume data', e);
       }
