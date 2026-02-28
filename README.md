@@ -1,4 +1,3 @@
-<img width="1882" height="923" alt="image" src="https://github.com/user-attachments/assets/8b4a1f99-4861-49d3-bb1d-51f1a5302492" />
 
 # Career OS
 
